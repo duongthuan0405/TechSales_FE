@@ -1,0 +1,342 @@
+export interface Product {
+  id: string;
+  name: string;
+  category: string;
+  price: number;
+  stock: number;
+  image: string;
+  description: string;
+  brand: string;
+  rating: number;
+  reviews: number;
+}
+
+export interface Order {
+  id: string;
+  customerId: string;
+  customerName: string;
+  date: string;
+  status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  total: number;
+  items: OrderItem[];
+}
+
+export interface OrderItem {
+  productId: string;
+  productName: string;
+  quantity: number;
+  price: number;
+}
+
+export interface Customer {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  address: string;
+  totalOrders: number;
+  totalSpent: number;
+  joinDate: string;
+}
+
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: 'customer' | 'sales' | 'business' | 'technical';
+  status: 'active' | 'inactive';
+  lastLogin: string;
+}
+
+export const products: Product[] = [
+  {
+    id: 'p1',
+    name: 'MacBook Pro 16"',
+    category: 'Laptops',
+    price: 2499,
+    stock: 45,
+    image: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca4?w=400',
+    description: 'Powerful laptop with M3 Max chip, 36GB RAM, 1TB SSD',
+    brand: 'Apple',
+    rating: 4.8,
+    reviews: 234,
+  },
+  {
+    id: 'p2',
+    name: 'Dell XPS 15',
+    category: 'Laptops',
+    price: 1899,
+    stock: 32,
+    image: 'https://images.unsplash.com/photo-1593642632823-8f785ba67e45?w=400',
+    description: 'Premium laptop with Intel i9, 32GB RAM, 1TB SSD',
+    brand: 'Dell',
+    rating: 4.6,
+    reviews: 187,
+  },
+  {
+    id: 'p3',
+    name: 'iPhone 15 Pro',
+    category: 'Smartphones',
+    price: 999,
+    stock: 128,
+    image: 'https://images.unsplash.com/photo-1592286927505-c0d1981d9f09?w=400',
+    description: 'Latest iPhone with A17 Pro chip, 256GB storage',
+    brand: 'Apple',
+    rating: 4.9,
+    reviews: 512,
+  },
+  {
+    id: 'p4',
+    name: 'Samsung Galaxy S24 Ultra',
+    category: 'Smartphones',
+    price: 1199,
+    stock: 95,
+    image: 'https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?w=400',
+    description: 'Premium Android phone with S Pen, 512GB storage',
+    brand: 'Samsung',
+    rating: 4.7,
+    reviews: 389,
+  },
+  {
+    id: 'p5',
+    name: 'LG UltraWide 34"',
+    category: 'Monitors',
+    price: 599,
+    stock: 67,
+    image: 'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=400',
+    description: '34-inch curved monitor, 3440x1440, 144Hz',
+    brand: 'LG',
+    rating: 4.5,
+    reviews: 156,
+  },
+  {
+    id: 'p6',
+    name: 'Logitech MX Master 3S',
+    category: 'Mice',
+    price: 99,
+    stock: 234,
+    image: 'https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=400',
+    description: 'Premium wireless mouse with customizable buttons',
+    brand: 'Logitech',
+    rating: 4.8,
+    reviews: 892,
+  },
+  {
+    id: 'p7',
+    name: 'Keychron K8 Pro',
+    category: 'Keyboards',
+    price: 109,
+    stock: 156,
+    image: 'https://images.unsplash.com/photo-1595225476474-87563907a212?w=400',
+    description: 'Mechanical keyboard, hot-swappable switches, RGB',
+    brand: 'Keychron',
+    rating: 4.7,
+    reviews: 445,
+  },
+  {
+    id: 'p8',
+    name: 'Sony WH-1000XM5',
+    category: 'Headphones',
+    price: 399,
+    stock: 89,
+    image: 'https://images.unsplash.com/photo-1545127398-14699f92334b?w=400',
+    description: 'Premium noise-cancelling headphones, 30hr battery',
+    brand: 'Sony',
+    rating: 4.9,
+    reviews: 678,
+  },
+  {
+    id: 'p9',
+    name: 'PlayStation 5',
+    category: 'Gaming',
+    price: 499,
+    stock: 43,
+    image: 'https://images.unsplash.com/photo-1606813907291-d86efa9b94db?w=400',
+    description: 'Next-gen gaming console with 825GB SSD',
+    brand: 'Sony',
+    rating: 4.8,
+    reviews: 1234,
+  },
+  {
+    id: 'p10',
+    name: 'AirPods Pro 2',
+    category: 'Accessories',
+    price: 249,
+    stock: 178,
+    image: 'https://images.unsplash.com/photo-1606841837239-c5a1a4a07af7?w=400',
+    description: 'True wireless earbuds with active noise cancellation',
+    brand: 'Apple',
+    rating: 4.7,
+    reviews: 567,
+  },
+];
+
+export const orders: Order[] = [
+  {
+    id: 'ord-001',
+    customerId: 'c1',
+    customerName: 'John Smith',
+    date: '2026-05-07',
+    status: 'delivered',
+    total: 2748,
+    items: [
+      { productId: 'p1', productName: 'MacBook Pro 16"', quantity: 1, price: 2499 },
+      { productId: 'p6', productName: 'Logitech MX Master 3S', quantity: 1, price: 99 },
+      { productId: 'p10', productName: 'AirPods Pro 2', quantity: 1, price: 249 },
+    ],
+  },
+  {
+    id: 'ord-002',
+    customerId: 'c2',
+    customerName: 'Sarah Johnson',
+    date: '2026-05-06',
+    status: 'shipped',
+    total: 1299,
+    items: [
+      { productId: 'p4', productName: 'Samsung Galaxy S24 Ultra', quantity: 1, price: 1199 },
+      { productId: 'p6', productName: 'Logitech MX Master 3S', quantity: 1, price: 99 },
+    ],
+  },
+  {
+    id: 'ord-003',
+    customerId: 'c3',
+    customerName: 'Michael Chen',
+    date: '2026-05-05',
+    status: 'processing',
+    total: 1998,
+    items: [
+      { productId: 'p3', productName: 'iPhone 15 Pro', quantity: 2, price: 999 },
+    ],
+  },
+  {
+    id: 'ord-004',
+    customerId: 'c4',
+    customerName: 'Emily Davis',
+    date: '2026-05-04',
+    status: 'pending',
+    total: 1207,
+    items: [
+      { productId: 'p5', productName: 'LG UltraWide 34"', quantity: 1, price: 599 },
+      { productId: 'p7', productName: 'Keychron K8 Pro', quantity: 1, price: 109 },
+      { productId: 'p8', productName: 'Sony WH-1000XM5', quantity: 1, price: 399 },
+      { productId: 'p6', productName: 'Logitech MX Master 3S', quantity: 1, price: 99 },
+    ],
+  },
+  {
+    id: 'ord-005',
+    customerId: 'c5',
+    customerName: 'David Wilson',
+    date: '2026-05-03',
+    status: 'delivered',
+    total: 948,
+    items: [
+      { productId: 'p9', productName: 'PlayStation 5', quantity: 1, price: 499 },
+      { productId: 'p8', productName: 'Sony WH-1000XM5', quantity: 1, price: 399 },
+    ],
+  },
+];
+
+export const customers: Customer[] = [
+  {
+    id: 'c1',
+    name: 'John Smith',
+    email: 'john.smith@email.com',
+    phone: '+1 (555) 123-4567',
+    address: '123 Main St, New York, NY 10001',
+    totalOrders: 12,
+    totalSpent: 15847,
+    joinDate: '2024-03-15',
+  },
+  {
+    id: 'c2',
+    name: 'Sarah Johnson',
+    email: 'sarah.j@email.com',
+    phone: '+1 (555) 234-5678',
+    address: '456 Oak Ave, Los Angeles, CA 90001',
+    totalOrders: 8,
+    totalSpent: 8923,
+    joinDate: '2024-06-22',
+  },
+  {
+    id: 'c3',
+    name: 'Michael Chen',
+    email: 'michael.chen@email.com',
+    phone: '+1 (555) 345-6789',
+    address: '789 Pine Rd, San Francisco, CA 94102',
+    totalOrders: 15,
+    totalSpent: 22134,
+    joinDate: '2023-11-08',
+  },
+  {
+    id: 'c4',
+    name: 'Emily Davis',
+    email: 'emily.davis@email.com',
+    phone: '+1 (555) 456-7890',
+    address: '321 Elm St, Chicago, IL 60601',
+    totalOrders: 5,
+    totalSpent: 4567,
+    joinDate: '2025-01-19',
+  },
+  {
+    id: 'c5',
+    name: 'David Wilson',
+    email: 'david.w@email.com',
+    phone: '+1 (555) 567-8901',
+    address: '654 Maple Dr, Seattle, WA 98101',
+    totalOrders: 10,
+    totalSpent: 12345,
+    joinDate: '2024-08-11',
+  },
+];
+
+export const users: User[] = [
+  {
+    id: 'u1',
+    name: 'Admin User',
+    email: 'admin@techsales.com',
+    role: 'technical',
+    status: 'active',
+    lastLogin: '2026-05-08 09:30:00',
+  },
+  {
+    id: 'u2',
+    name: 'Business Manager',
+    email: 'business@techsales.com',
+    role: 'business',
+    status: 'active',
+    lastLogin: '2026-05-08 08:15:00',
+  },
+  {
+    id: 'u3',
+    name: 'Sales Rep',
+    email: 'sales@techsales.com',
+    role: 'sales',
+    status: 'active',
+    lastLogin: '2026-05-08 10:00:00',
+  },
+  {
+    id: 'u4',
+    name: 'Customer Demo',
+    email: 'customer@email.com',
+    role: 'customer',
+    status: 'active',
+    lastLogin: '2026-05-08 11:20:00',
+  },
+];
+
+export const salesData = [
+  { month: 'Jan', revenue: 45000, orders: 234 },
+  { month: 'Feb', revenue: 52000, orders: 289 },
+  { month: 'Mar', revenue: 48000, orders: 256 },
+  { month: 'Apr', revenue: 61000, orders: 334 },
+  { month: 'May', revenue: 55000, orders: 298 },
+  { month: 'Jun', revenue: 67000, orders: 367 },
+];
+
+export const categoryData = [
+  { name: 'Laptops', value: 35 },
+  { name: 'Smartphones', value: 28 },
+  { name: 'Monitors', value: 15 },
+  { name: 'Accessories', value: 12 },
+  { name: 'Gaming', value: 10 },
+];
