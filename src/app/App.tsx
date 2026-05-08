@@ -1,27 +1,26 @@
 import { useState } from 'react';
+import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { LoginPage } from './components/LoginPage';
+import { LoginPage } from './pages/auth/LoginPage';
 import { DashboardLayout } from './components/layout/DashboardLayout';
-import { ProductCatalog } from './components/customer/ProductCatalog';
-import { ShoppingCart } from './components/customer/ShoppingCart';
-import { OrderHistory } from './components/customer/OrderHistory';
-import { SalesDashboard } from './components/sales/SalesDashboard';
-import { OrderManagement } from './components/sales/OrderManagement';
-import { BusinessDashboard } from './components/business/BusinessDashboard';
-import { ProductManagement } from './components/business/ProductManagement';
-import { TechnicalDashboard } from './components/technical/TechnicalDashboard';
-import { UserManagement } from './components/technical/UserManagement';
+import { ProductCatalogPage } from './pages/customer/ProductCatalogPage';
+import { ShoppingCartPage } from './pages/customer/ShoppingCartPage';
+import { OrderHistoryPage } from './pages/customer/OrderHistoryPage';
+import { SalesDashboardPage } from './pages/sales/SalesDashboardPage';
+import { OrderManagementPage } from './pages/sales/OrderManagementPage';
+import { BusinessDashboardPage } from './pages/business/BusinessDashboardPage';
+import { ProductManagementPage } from './pages/business/ProductManagementPage';
+import { TechnicalDashboardPage } from './pages/technical/TechnicalDashboardPage';
+import { UserManagementPage } from './pages/technical/UserManagementPage';
 import { Modal } from './components/ui/Modal';
 import { Button } from './components/ui/Button';
+import { CartItem } from '../data/ui_types/models';
 
-interface CartItem {
-  productId: string;
-  quantity: number;
-}
 
 function AppContent() {
   const { user, logout } = useAuth();
-  const [currentPath, setCurrentPath] = useState('');
+  const location = useLocation();
+  const navigate = useNavigate();
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
 
@@ -36,7 +35,6 @@ function AppContent() {
     technical: '/technical',
   };
 
-  const activePath = currentPath || roleBasedDefaultPath[user.role];
 
   const handleAddToCart = (productId: string) => {
     setCartItems(prev => {
@@ -72,66 +70,7 @@ function AppContent() {
   const handleConfirmCheckout = () => {
     setCartItems([]);
     setShowCheckoutModal(false);
-    setCurrentPath('/customer/orders');
-  };
-
-  const renderContent = () => {
-    switch (user.role) {
-      case 'customer':
-        if (activePath === '/customer/products') {
-          return <ProductCatalog onAddToCart={handleAddToCart} />;
-        }
-        if (activePath === '/customer/cart') {
-          return (
-            <ShoppingCart
-              cartItems={cartItems}
-              onUpdateQuantity={handleUpdateQuantity}
-              onRemoveItem={handleRemoveItem}
-              onCheckout={handleCheckout}
-            />
-          );
-        }
-        if (activePath === '/customer/orders') {
-          return <OrderHistory />;
-        }
-        return (
-          <div className="space-y-6">
-            <div>
-              <h1 className="text-3xl font-bold">Welcome Back!</h1>
-              <p className="text-muted-foreground">Discover the latest technology products</p>
-            </div>
-            <ProductCatalog onAddToCart={handleAddToCart} />
-          </div>
-        );
-
-      case 'sales':
-        if (activePath === '/sales/orders') {
-          return <OrderManagement />;
-        }
-        return <SalesDashboard />;
-
-      case 'business':
-        if (activePath === '/business/products') {
-          return <ProductManagement />;
-        }
-        return <BusinessDashboard />;
-
-      case 'technical':
-        if (activePath === '/technical/users') {
-          return <UserManagement />;
-        }
-        return <TechnicalDashboard />;
-
-      default:
-        return (
-          <div className="flex h-full items-center justify-center">
-            <div className="text-center">
-              <h2 className="text-2xl font-bold">Welcome to TechSales</h2>
-              <p className="text-muted-foreground">Select a page from the sidebar</p>
-            </div>
-          </div>
-        );
-    }
+    navigate('/customer/orders');
   };
 
   const getRoleDisplayName = (role: string) => {
@@ -148,13 +87,79 @@ function AppContent() {
     <>
       <DashboardLayout
         role={user.role}
-        currentPath={activePath}
-        onNavigate={setCurrentPath}
         userName={user.name}
         userRole={getRoleDisplayName(user.role)}
         onLogout={logout}
       >
-        {renderContent()}
+        <Routes>
+          {/* Default Redirect */}
+          <Route path="/" element={<Navigate to={roleBasedDefaultPath[user.role]} replace />} />
+
+          {/* Customer Routes */}
+          {user.role === 'customer' && (
+            <>
+              <Route path="/customer" element={
+                <div className="space-y-6">
+                  <div>
+                    <h1 className="text-3xl font-bold">Welcome Back!</h1>
+                    <p className="text-muted-foreground">Discover the latest technology products</p>
+                  </div>
+                  <ProductCatalogPage onAddToCart={handleAddToCart} />
+                </div>
+              } />
+              <Route path="/customer/products" element={<ProductCatalogPage onAddToCart={handleAddToCart} />} />
+              <Route path="/customer/cart" element={
+                <ShoppingCartPage
+                  cartItems={cartItems}
+                  onUpdateQuantity={handleUpdateQuantity}
+                  onRemoveItem={handleRemoveItem}
+                  onCheckout={handleCheckout}
+                />
+              } />
+              <Route path="/customer/orders" element={<OrderHistoryPage />} />
+            </>
+          )}
+
+          {/* Sales Routes */}
+          {user.role === 'sales' && (
+            <>
+              <Route path="/sales" element={<SalesDashboardPage />} />
+              <Route path="/sales/orders" element={<OrderManagementPage />} />
+            </>
+          )}
+
+          {/* Business Routes */}
+          {user.role === 'business' && (
+            <>
+              <Route path="/business" element={<BusinessDashboardPage />} />
+              <Route path="/business/products" element={<ProductManagementPage />} />
+            </>
+          )}
+
+          {/* Technical Routes */}
+          {user.role === 'technical' && (
+            <>
+              <Route path="/technical" element={<TechnicalDashboardPage />} />
+              <Route path="/technical/users" element={<UserManagementPage />} />
+            </>
+          )}
+
+          {/* Catch all */}
+          <Route path="*" element={
+            <div className="flex h-full items-center justify-center">
+              <div className="text-center">
+                <h2 className="text-2xl font-bold">Page Not Found</h2>
+                <p className="text-muted-foreground">The page you are looking for does not exist.</p>
+                <Button 
+                  className="mt-4" 
+                  onClick={() => navigate(roleBasedDefaultPath[user.role])}
+                >
+                  Back to Dashboard
+                </Button>
+              </div>
+            </div>
+          } />
+        </Routes>
       </DashboardLayout>
 
       <Modal

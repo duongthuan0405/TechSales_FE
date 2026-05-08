@@ -1,12 +1,12 @@
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
-import { StatsCard } from '../analytics/StatsCard';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/Table';
-import { Badge } from '../ui/Badge';
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
+import { StatsCard } from '../../components/analytics/StatsCard';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/Table';
+import { Badge } from '../../components/ui/Badge';
 import { orders, salesData } from '../../data/mockData';
 import { DollarSign, ShoppingCart, TrendingUp, Users } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
-export function SalesDashboard() {
+export function SalesDashboardPage() {
   const recentOrders = orders.slice(0, 5);
   const totalRevenue = orders.reduce((sum, order) => sum + order.total, 0);
   const avgOrderValue = totalRevenue / orders.length;

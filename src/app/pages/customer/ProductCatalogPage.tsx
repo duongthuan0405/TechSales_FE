@@ -1,17 +1,23 @@
 import { useState } from 'react';
 import { products } from '../../data/mockData';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '../ui/Card';
-import { Button } from '../ui/Button';
-import { Input } from '../ui/Input';
-import { Select } from '../ui/Select';
-import { Badge } from '../ui/Badge';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '../../components/ui/Card';
+import { Button } from '../../components/ui/Button';
+import { Input } from '../../components/ui/Input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../../components/ui/Select";
+import { Badge } from '../../components/ui/Badge';
 import { ShoppingCart, Star, Search } from 'lucide-react';
 
-interface ProductCatalogProps {
+interface ProductCatalogPageProps {
   onAddToCart: (productId: string) => void;
 }
 
-export function ProductCatalog({ onAddToCart }: ProductCatalogProps) {
+export function ProductCatalogPage({ onAddToCart }: ProductCatalogPageProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
 
@@ -41,12 +47,17 @@ export function ProductCatalog({ onAddToCart }: ProductCatalogProps) {
             className="pl-9"
           />
         </div>
-        <Select value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)}>
-          {categories.map(cat => (
-            <option key={cat} value={cat}>
-              {cat === 'all' ? 'All Categories' : cat}
-            </option>
-          ))}
+        <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="All Categories" />
+          </SelectTrigger>
+          <SelectContent>
+            {categories.map(cat => (
+              <SelectItem key={cat} value={cat}>
+                {cat === 'all' ? 'All Categories' : cat}
+              </SelectItem>
+            ))}
+          </SelectContent>
         </Select>
       </div>
 

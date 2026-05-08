@@ -1,30 +1,48 @@
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/Table';
-import { Badge } from '../ui/Badge';
-import { Button } from '../ui/Button';
-import { Input } from '../ui/Input';
-import { Select } from '../ui/Select';
-import { products } from '../../data/mockData';
-import { Search, Edit, Trash2, Plus } from 'lucide-react';
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/Card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../../components/ui/Table";
+import { Badge } from "../../components/ui/Badge";
+import { Button } from "../../components/ui/Button";
+import { Input } from "../../components/ui/Input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../../components/ui/Select";
+import { products } from "../../data/mockData";
+import { Search, Edit, Trash2, Plus } from "lucide-react";
 
-export function ProductManagement() {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('all');
+export function ProductManagementPage() {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
 
-  const categories = ['all', ...Array.from(new Set(products.map(p => p.category)))];
+  const categories = [
+    "all",
+    ...Array.from(new Set(products.map((p) => p.category))),
+  ];
 
-  const filteredProducts = products.filter(product => {
-    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  const filteredProducts = products.filter((product) => {
+    const matchesSearch =
+      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.brand.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = categoryFilter === 'all' || product.category === categoryFilter;
+    const matchesCategory =
+      categoryFilter === "all" || product.category === categoryFilter;
     return matchesSearch && matchesCategory;
   });
 
   const getStockStatus = (stock: number) => {
-    if (stock === 0) return { variant: 'danger', label: 'Out of Stock' };
-    if (stock < 20) return { variant: 'warning', label: 'Low Stock' };
-    return { variant: 'success', label: 'In Stock' };
+    if (stock === 0) return { variant: "danger", label: "Out of Stock" };
+    if (stock < 20) return { variant: "warning", label: "Low Stock" };
+    return { variant: "success", label: "In Stock" };
   };
 
   return (
@@ -50,12 +68,20 @@ export function ProductManagement() {
             className="pl-9"
           />
         </div>
-        <Select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
-          {categories.map(cat => (
-            <option key={cat} value={cat}>
-              {cat === 'all' ? 'All Categories' : cat}
-            </option>
-          ))}
+        <Select
+          value={categoryFilter}
+          onValueChange={setCategoryFilter}
+        >
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Select Category" />
+          </SelectTrigger>
+          <SelectContent>
+            {categories.map((cat) => (
+              <SelectItem key={cat} value={cat}>
+                {cat === "all" ? "All Categories" : cat}
+              </SelectItem>
+            ))}
+          </SelectContent>
         </Select>
       </div>
 
@@ -77,22 +103,30 @@ export function ProductManagement() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredProducts.map(product => {
+              {filteredProducts.map((product) => {
                 const stockStatus = getStockStatus(product.stock);
                 return (
                   <TableRow key={product.id}>
                     <TableCell>
                       <div className="flex items-center gap-3">
-                        <img src={product.image} alt={product.name} className="h-10 w-10 rounded object-cover" />
+                        <img
+                          src={product.image}
+                          alt={product.name}
+                          className="h-10 w-10 rounded object-cover"
+                        />
                         <div>
                           <div className="font-medium">{product.name}</div>
-                          <div className="text-xs text-muted-foreground">{product.id}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {product.id}
+                          </div>
                         </div>
                       </div>
                     </TableCell>
                     <TableCell>{product.category}</TableCell>
                     <TableCell>{product.brand}</TableCell>
-                    <TableCell className="font-semibold">${product.price.toLocaleString()}</TableCell>
+                    <TableCell className="font-semibold">
+                      ${product.price.toLocaleString()}
+                    </TableCell>
                     <TableCell>{product.stock}</TableCell>
                     <TableCell>
                       <Badge variant={stockStatus.variant as any}>

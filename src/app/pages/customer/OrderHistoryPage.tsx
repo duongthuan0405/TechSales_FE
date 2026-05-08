@@ -1,9 +1,9 @@
 import { orders } from '../../data/mockData';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
-import { Badge } from '../ui/Badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/Table';
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
+import { Badge } from '../../components/ui/Badge';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/Table';
 
-export function OrderHistory() {
+export function OrderHistoryPage() {
   const getStatusVariant = (status: string) => {
     switch (status) {
       case 'delivered': return 'success';

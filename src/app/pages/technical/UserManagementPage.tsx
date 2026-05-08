@@ -1,14 +1,20 @@
 import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/Table';
-import { Badge } from '../ui/Badge';
-import { Button } from '../ui/Button';
-import { Input } from '../ui/Input';
-import { Select } from '../ui/Select';
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/Table';
+import { Badge } from '../../components/ui/Badge';
+import { Button } from '../../components/ui/Button';
+import { Input } from '../../components/ui/Input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../../components/ui/Select";
 import { users } from '../../data/mockData';
 import { Search, Edit, Trash2, Plus, UserPlus } from 'lucide-react';
 
-export function UserManagement() {
+export function UserManagementPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
 
@@ -42,12 +48,17 @@ export function UserManagement() {
             className="pl-9"
           />
         </div>
-        <Select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}>
-          <option value="all">All Roles</option>
-          <option value="customer">Customer</option>
-          <option value="sales">Sales Staff</option>
-          <option value="business">Business Admin</option>
-          <option value="technical">Technical Admin</option>
+        <Select value={roleFilter} onValueChange={setRoleFilter}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="All Roles" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Roles</SelectItem>
+            <SelectItem value="customer">Customer</SelectItem>
+            <SelectItem value="sales">Sales Staff</SelectItem>
+            <SelectItem value="business">Business Admin</SelectItem>
+            <SelectItem value="technical">Technical Admin</SelectItem>
+          </SelectContent>
         </Select>
       </div>
 

@@ -1,11 +1,11 @@
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
-import { StatsCard } from '../analytics/StatsCard';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/Table';
-import { Badge } from '../ui/Badge';
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
+import { StatsCard } from '../../components/analytics/StatsCard';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/Table';
+import { Badge } from '../../components/ui/Badge';
 import { users } from '../../data/mockData';
 import { Users, Shield, Database, Activity } from 'lucide-react';
 
-export function TechnicalDashboard() {
+export function TechnicalDashboardPage() {
   const activeUsers = users.filter(u => u.status === 'active').length;
   const systemLogs = [
     { id: 1, timestamp: '2026-05-08 11:23:45', level: 'info', message: 'User login successful', user: 'john.smith@email.com' },

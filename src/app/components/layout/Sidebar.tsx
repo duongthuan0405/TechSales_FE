@@ -1,4 +1,5 @@
 import { ReactNode } from 'react';
+import { NavLink } from 'react-router';
 import {
   LayoutDashboard,
   ShoppingCart,
@@ -15,8 +16,6 @@ import { cn } from '../../utils/cn';
 
 interface SidebarProps {
   role: 'customer' | 'sales' | 'business' | 'technical';
-  currentPath: string;
-  onNavigate: (path: string) => void;
 }
 
 interface NavItem {
@@ -59,7 +58,7 @@ const roleNavItems: Record<string, NavItem[]> = {
   ],
 };
 
-export function Sidebar({ role, currentPath, onNavigate }: SidebarProps) {
+export function Sidebar({ role }: SidebarProps) {
   const navItems = roleNavItems[role] || [];
 
   return (
@@ -69,19 +68,20 @@ export function Sidebar({ role, currentPath, onNavigate }: SidebarProps) {
       </div>
       <nav className="flex-1 space-y-1 p-4">
         {navItems.map((item) => (
-          <button
+          <NavLink
             key={item.path}
-            onClick={() => onNavigate(item.path)}
-            className={cn(
+            to={item.path}
+            end={item.path === '/customer' || item.path === '/sales' || item.path === '/business' || item.path === '/technical'}
+            className={({ isActive }) => cn(
               'flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors',
-              currentPath === item.path
+              isActive
                 ? 'bg-sidebar-accent text-sidebar-accent-foreground'
                 : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
             )}
           >
             {item.icon}
             <span>{item.label}</span>
-          </button>
+          </NavLink>
         ))}
       </nav>
     </div>

@@ -1,6 +1,6 @@
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '../ui/Card';
-import { Button } from '../ui/Button';
-import { Badge } from '../ui/Badge';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '../../components/ui/Card';
+import { Button } from '../../components/ui/Button';
+import { Badge } from '../../components/ui/Badge';
 import { Trash2, Plus, Minus } from 'lucide-react';
 import { products } from '../../data/mockData';
 
@@ -9,14 +9,14 @@ interface CartItem {
   quantity: number;
 }
 
-interface ShoppingCartProps {
+interface ShoppingCartPageProps {
   cartItems: CartItem[];
   onUpdateQuantity: (productId: string, quantity: number) => void;
   onRemoveItem: (productId: string) => void;
   onCheckout: () => void;
 }
 
-export function ShoppingCart({ cartItems, onUpdateQuantity, onRemoveItem, onCheckout }: ShoppingCartProps) {
+export function ShoppingCartPage({ cartItems, onUpdateQuantity, onRemoveItem, onCheckout }: ShoppingCartPageProps) {
   const cartWithDetails = cartItems.map(item => {
     const product = products.find(p => p.id === item.productId);
     return { ...item, product };

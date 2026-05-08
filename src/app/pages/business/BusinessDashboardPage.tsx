@@ -1,10 +1,10 @@
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
-import { StatsCard } from '../analytics/StatsCard';
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
+import { StatsCard } from '../../components/analytics/StatsCard';
 import { salesData, categoryData, products } from '../../data/mockData';
 import { DollarSign, Package, ShoppingCart, TrendingUp } from 'lucide-react';
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
-export function BusinessDashboard() {
+export function BusinessDashboardPage() {
   const totalProducts = products.length;
   const totalRevenue = 328000;
   const totalOrders = 1778;

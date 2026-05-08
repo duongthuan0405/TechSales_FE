@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { Button } from './ui/Button';
-import { Input } from './ui/Input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/Card';
-import { useAuth } from '../context/AuthContext';
+import { Button } from '../../components/ui/Button';
+import { Input } from '../../components/ui/Input';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/Card';
+import { useAuth } from '../../context/AuthContext';
 import { ShoppingBag } from 'lucide-react';
 
 export function LoginPage() {

@@ -4,8 +4,6 @@ import { TopNav } from './TopNav';
 
 interface DashboardLayoutProps {
   role: 'customer' | 'sales' | 'business' | 'technical';
-  currentPath: string;
-  onNavigate: (path: string) => void;
   userName: string;
   userRole: string;
   onLogout: () => void;
@@ -14,8 +12,6 @@ interface DashboardLayoutProps {
 
 export function DashboardLayout({
   role,
-  currentPath,
-  onNavigate,
   userName,
   userRole,
   onLogout,
@@ -23,7 +19,7 @@ export function DashboardLayout({
 }: DashboardLayoutProps) {
   return (
     <div className="flex h-screen w-full overflow-hidden">
-      <Sidebar role={role} currentPath={currentPath} onNavigate={onNavigate} />
+      <Sidebar role={role} />
       <div className="flex flex-1 flex-col overflow-hidden">
         <TopNav userName={userName} userRole={userRole} onLogout={onLogout} />
         <main className="flex-1 overflow-auto bg-background p-6">

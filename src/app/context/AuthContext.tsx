@@ -1,14 +1,7 @@
 import { createContext, useContext, useState, ReactNode } from 'react';
 import { users } from '../data/mockData';
+import { UserRole, AuthUser } from '../../data/ui_types/models';
 
-type UserRole = 'customer' | 'sales' | 'business' | 'technical';
-
-interface AuthUser {
-  id: string;
-  name: string;
-  email: string;
-  role: UserRole;
-}
 
 interface AuthContextType {
   user: AuthUser | null;
