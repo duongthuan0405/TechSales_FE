@@ -1,4 +1,16 @@
-import { Product, Order, Customer, User, SalesData, CategoryData } from '../../data/ui_types/models';
+import { Product, Order, Customer, User, SalesData, CategoryData, CartItem } from '../models/ui_types/models';
+import { Category } from '../models/ui_types/category';
+
+export let mockCart: CartItem[] = [];
+
+export const categories: Category[] = [
+  { id: 'cat1', name: 'Laptops', icon: 'Laptop', productCount: 124 },
+  { id: 'cat2', name: 'Smartphones', icon: 'Smartphone', productCount: 86 },
+  { id: 'cat3', name: 'Monitors', icon: 'Monitor', productCount: 52 },
+  { id: 'cat4', name: 'Gaming', icon: 'Gamepad2', productCount: 43 },
+  { id: 'cat5', name: 'Accessories', icon: 'Plug2', productCount: 95 },
+  { id: 'cat6', name: 'Audio', icon: 'Speaker', productCount: 28 },
+];
 
 export const products: Product[] = [
   {

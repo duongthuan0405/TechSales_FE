@@ -1,6 +1,6 @@
-import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { StatsCard } from '../../components/analytics/StatsCard';
-import { salesData, categoryData, products } from '../../data/mockData';
+import { salesData, categoryData, products } from '../../../data/mockData';
 import { DollarSign, Package, ShoppingCart, TrendingUp } from 'lucide-react';
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 

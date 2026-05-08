@@ -1,22 +1,31 @@
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '../../components/ui/Card';
-import { Button } from '../../components/ui/Button';
-import { Badge } from '../../components/ui/Badge';
-import { Trash2, Plus, Minus } from 'lucide-react';
-import { products } from '../../data/mockData';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '../../components/ui/card';
+import { Button } from '../../components/ui/button';
+import { Badge } from '../../components/ui/badge';
+import { Modal } from '../../components/ui/modal';
+import { Trash2, Plus, Minus, Loader2 } from 'lucide-react';
+import { products } from '../../../data/mockData';
+import { useCreateOrder } from '../../../dataHook/orderDataHook';
+import { useGetCart, useUpdateCartQuantity, useRemoveFromCart, useClearCart } from '../../../dataHook/cartDataHook';
+import { toast } from 'sonner';
 
-interface CartItem {
-  productId: string;
-  quantity: number;
-}
+export function ShoppingCartPage() {
+  const navigate = useNavigate();
+  const [showCheckoutModal, setShowCheckoutModal] = useState(false);
+  
+  const { data: cartItems = [], isLoading, isError } = useGetCart();
+  const { mutate: updateQuantity, isPending: isUpdating } = useUpdateCartQuantity();
+  const { mutate: removeItem, isPending: isRemoving } = useRemoveFromCart();
+  const { mutate: clearCart } = useClearCart();
+  const { mutate: createOrder, isPending: isCreatingOrder } = useCreateOrder();
 
-interface ShoppingCartPageProps {
-  cartItems: CartItem[];
-  onUpdateQuantity: (productId: string, quantity: number) => void;
-  onRemoveItem: (productId: string) => void;
-  onCheckout: () => void;
-}
+  useEffect(() => {
+    if (isError) {
+      toast.error('Failed to load cart');
+    }
+  }, [isError]);
 
-export function ShoppingCartPage({ cartItems, onUpdateQuantity, onRemoveItem, onCheckout }: ShoppingCartPageProps) {
   const cartWithDetails = cartItems.map(item => {
     const product = products.find(p => p.id === item.productId);
     return { ...item, product };
@@ -25,6 +34,53 @@ export function ShoppingCartPage({ cartItems, onUpdateQuantity, onRemoveItem, on
   const subtotal = cartWithDetails.reduce((sum, item) => sum + (item.product!.price * item.quantity), 0);
   const tax = subtotal * 0.08;
   const total = subtotal + tax;
+
+  const handleCheckout = () => {
+    setShowCheckoutModal(true);
+  };
+
+  const handleUpdateQuantity = (productId: string, quantity: number) => {
+    updateQuantity({ productId, quantity }, {
+      onError: () => toast.error('Failed to update quantity')
+    });
+  };
+
+  const handleRemoveItem = (productId: string) => {
+    removeItem(productId, {
+      onSuccess: () => toast.success('Item removed'),
+      onError: () => toast.error('Failed to remove item')
+    });
+  };
+
+  const handleConfirmCheckout = () => {
+    createOrder({
+      items: cartItems,
+      total,
+      subtotal,
+      tax
+    }, {
+      onSuccess: () => {
+        clearCart(undefined, {
+          onSuccess: () => {
+            setShowCheckoutModal(false);
+            toast.success('Order placed successfully!');
+            navigate('/customer/orders');
+          }
+        });
+      },
+      onError: () => {
+        toast.error('Failed to place order');
+      }
+    });
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   if (cartItems.length === 0) {
     return (
@@ -62,8 +118,9 @@ export function ShoppingCartPage({ cartItems, onUpdateQuantity, onRemoveItem, on
                       <Badge variant="secondary" className="mt-2">{item.product!.category}</Badge>
                     </div>
                     <button
-                      onClick={() => onRemoveItem(item.productId)}
-                      className="rounded-lg p-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                      onClick={() => handleRemoveItem(item.productId)}
+                      disabled={isRemoving}
+                      className="rounded-lg p-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
@@ -71,16 +128,17 @@ export function ShoppingCartPage({ cartItems, onUpdateQuantity, onRemoveItem, on
                   <div className="mt-4 flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <button
-                        onClick={() => onUpdateQuantity(item.productId, item.quantity - 1)}
-                        disabled={item.quantity <= 1}
+                        onClick={() => handleUpdateQuantity(item.productId, item.quantity - 1)}
+                        disabled={item.quantity <= 1 || isUpdating}
                         className="flex h-8 w-8 items-center justify-center rounded-lg border border-border hover:bg-accent disabled:opacity-50"
                       >
                         <Minus className="h-4 w-4" />
                       </button>
                       <span className="w-12 text-center">{item.quantity}</span>
                       <button
-                        onClick={() => onUpdateQuantity(item.productId, item.quantity + 1)}
-                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-border hover:bg-accent"
+                        onClick={() => handleUpdateQuantity(item.productId, item.quantity + 1)}
+                        disabled={isUpdating}
+                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-border hover:bg-accent disabled:opacity-50"
                       >
                         <Plus className="h-4 w-4" />
                       </button>
@@ -117,13 +175,46 @@ export function ShoppingCartPage({ cartItems, onUpdateQuantity, onRemoveItem, on
               </div>
             </CardContent>
             <CardFooter>
-              <Button onClick={onCheckout} className="w-full">
+              <Button onClick={handleCheckout} className="w-full">
                 Proceed to Checkout
               </Button>
             </CardFooter>
           </Card>
         </div>
       </div>
+
+      <Modal
+        open={showCheckoutModal}
+        onOpenChange={setShowCheckoutModal}
+        title="Checkout"
+        description="Complete your order"
+        size="md"
+        footer={
+          <>
+            <Button 
+              variant="outline" 
+              onClick={() => setShowCheckoutModal(false)}
+              disabled={isCreatingOrder}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleConfirmCheckout}
+              disabled={isCreatingOrder}
+            >
+              {isCreatingOrder && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isCreatingOrder ? 'Processing...' : 'Confirm Order'}
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <p>Your order will be placed once you confirm.</p>
+          <p className="text-sm text-muted-foreground">
+            You will receive a confirmation email shortly after confirmation.
+          </p>
+        </div>
+      </Modal>
     </div>
   );
 }

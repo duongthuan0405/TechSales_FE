@@ -1,25 +1,33 @@
-import { useState } from 'react';
-import { products } from '../../data/mockData';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '../../components/ui/Card';
-import { Button } from '../../components/ui/Button';
-import { Input } from '../../components/ui/Input';
+import { useState, useEffect } from 'react';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '../../components/ui/card';
+import { Button } from '../../components/ui/button';
+import { Input } from '../../components/ui/input';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../../components/ui/Select";
-import { Badge } from '../../components/ui/Badge';
-import { ShoppingCart, Star, Search } from 'lucide-react';
+} from "../../components/ui/select";
+import { Badge } from '../../components/ui/badge';
+import { ShoppingCart, Star, Search, Loader2 } from 'lucide-react';
+import { useGetProducts } from '../../../dataHook/productDataHook';
+import { useAddToCart } from '../../../dataHook/cartDataHook';
+import { toast } from 'sonner';
+import { useNavigate } from 'react-router';
 
-interface ProductCatalogPageProps {
-  onAddToCart: (productId: string) => void;
-}
-
-export function ProductCatalogPage({ onAddToCart }: ProductCatalogPageProps) {
+export function ProductCatalogPage() {
+  const navigate = useNavigate();
+  const { data: products = [], isLoading, isError } = useGetProducts();
+  const { mutate: addToCart, isPending: isAdding } = useAddToCart();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
+
+  useEffect(() => {
+    if (isError) {
+      toast.error('Failed to load products');
+    }
+  }, [isError]);
 
   const categories = ['all', ...Array.from(new Set(products.map(p => p.category)))];
 
@@ -29,6 +37,17 @@ export function ProductCatalogPage({ onAddToCart }: ProductCatalogPageProps) {
     const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
+
+  const handleAddToCart = (productId: string) => {
+    addToCart(productId, {
+      onSuccess: () => {
+        toast.success('Added to cart');
+      },
+      onError: () => {
+        toast.error('Failed to add to cart');
+      }
+    });
+  };
 
   return (
     <div className="space-y-6">
@@ -61,49 +80,58 @@ export function ProductCatalogPage({ onAddToCart }: ProductCatalogPageProps) {
         </Select>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {filteredProducts.map(product => (
-          <Card key={product.id}>
-            <CardHeader>
-              <img
-                src={product.image}
-                alt={product.name}
-                className="mb-4 h-48 w-full rounded-lg object-cover"
-              />
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <CardTitle className="text-lg">{product.name}</CardTitle>
-                  <p className="text-sm text-muted-foreground">{product.brand}</p>
+      {isLoading ? (
+        <div className="flex h-64 items-center justify-center">
+          <div className="flex flex-col items-center gap-2">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-muted-foreground">Loading products...</p>
+          </div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {filteredProducts.map(product => (
+            <Card key={product.id} className="cursor-pointer transition-all hover:shadow-md" onClick={() => navigate(`/customer/products/${product.id}`)}>
+              <CardHeader>
+                <img
+                  src={product.image}
+                  alt={product.name}
+                  className="mb-4 h-48 w-full rounded-lg object-cover"
+                />
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <CardTitle className="text-lg">{product.name}</CardTitle>
+                    <p className="text-sm text-muted-foreground">{product.brand}</p>
+                  </div>
+                  <Badge variant="secondary">{product.category}</Badge>
                 </div>
-                <Badge variant="secondary">{product.category}</Badge>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <p className="mb-4 text-sm text-muted-foreground">{product.description}</p>
-              <div className="flex items-center gap-2 mb-2">
-                <div className="flex items-center gap-1">
-                  <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                  <span className="text-sm font-medium">{product.rating}</span>
+              </CardHeader>
+              <CardContent>
+                <p className="mb-4 text-sm text-muted-foreground line-clamp-2">{product.description}</p>
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="flex items-center gap-1">
+                    <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                    <span className="text-sm font-medium">{product.rating}</span>
+                  </div>
+                  <span className="text-sm text-muted-foreground">({product.reviews} reviews)</span>
                 </div>
-                <span className="text-sm text-muted-foreground">({product.reviews} reviews)</span>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                {product.stock > 0 ? `${product.stock} in stock` : 'Out of stock'}
-              </p>
-            </CardContent>
-            <CardFooter className="flex items-center justify-between">
-              <div className="text-2xl font-bold">${product.price.toLocaleString()}</div>
-              <Button
-                onClick={() => onAddToCart(product.id)}
-                disabled={product.stock === 0}
-              >
-                <ShoppingCart className="mr-2 h-4 w-4" />
-                Add to Cart
-              </Button>
-            </CardFooter>
-          </Card>
-        ))}
-      </div>
+                <p className="text-sm text-muted-foreground">
+                  {product.stock > 0 ? `${product.stock} in stock` : 'Out of stock'}
+                </p>
+              </CardContent>
+              <CardFooter className="flex items-center justify-between">
+                <div className="text-2xl font-bold">${product.price.toLocaleString()}</div>
+                <Button
+                  onClick={(e) => { e.stopPropagation(); handleAddToCart(product.id); }}
+                  disabled={product.stock === 0 || isAdding}
+                >
+                  {isAdding ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ShoppingCart className="mr-2 h-4 w-4" />}
+                  {isAdding ? 'Adding...' : 'Add to Cart'}
+                </Button>
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

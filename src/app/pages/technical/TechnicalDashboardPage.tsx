@@ -1,8 +1,8 @@
-import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { StatsCard } from '../../components/analytics/StatsCard';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/Table';
-import { Badge } from '../../components/ui/Badge';
-import { users } from '../../data/mockData';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table';
+import { Badge } from '../../components/ui/badge';
+import { users } from '../../../data/mockData';
 import { Users, Shield, Database, Activity } from 'lucide-react';
 
 export function TechnicalDashboardPage() {

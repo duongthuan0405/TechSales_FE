@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, ReactNode } from 'react';
-import { users } from '../data/mockData';
-import { UserRole, AuthUser } from '../../data/ui_types/models';
+import { users } from '../../data/mockData';
+import { UserRole, AuthUser } from '../../models/ui_types/models';
 
 
 interface AuthContextType {
