@@ -1,61 +1,83 @@
 import { useState } from 'react';
+import { useNavigate, Link } from 'react-router';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
+import { Label } from '../../components/ui/label';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '../../components/ui/card';
 import { useAuth } from '../../context/AuthContext';
-import { ShoppingBag } from 'lucide-react';
+import { useLoginMutation } from '../../../dataHook/authDataHook';
+import { ShoppingBag, Loader2, KeyRound } from 'lucide-react';
+import { toast } from 'sonner';
 
 export function LoginPage() {
-  const { login } = useAuth();
+  const navigate = useNavigate();
+  const { mutate: login, isPending: isLoading, error: loginError } = useLoginMutation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const success = login(email, password);
-    if (!success) {
-      setError('Invalid credentials. Try: admin@techsales.com, business@techsales.com, sales@techsales.com, or customer@email.com');
-    }
+    login({ email, password }, {
+      onSuccess: () => {
+        toast.success('Welcome back!');
+        navigate('/');
+      },
+      onError: (err: any) => {
+        toast.error(err.message || 'Login failed');
+      }
+    });
   };
 
   const quickLogin = (loginEmail: string) => {
-    setEmail(loginEmail);
-    setPassword('password');
-    login(loginEmail, 'password');
+    login({ email: loginEmail, password: 'password' }, {
+      onSuccess: () => {
+        toast.success('Quick login successful!');
+        navigate('/');
+      },
+      onError: (err: any) => {
+        toast.error(err.message || 'Quick login failed');
+      }
+    });
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-gray-100 p-4">
-      <div className="w-full max-w-md space-y-6">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4 dark:from-slate-950 dark:to-slate-900">
+      <div className="w-full max-w-md space-y-8">
         <div className="text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-600">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-600 shadow-lg shadow-blue-500/20">
             <ShoppingBag className="h-8 w-8 text-white" />
           </div>
-          <h1 className="text-3xl font-bold">TechSales Management</h1>
-          <p className="mt-2 text-muted-foreground">Sign in to your account</p>
+          <h1 className="text-4xl font-bold tracking-tight">TechSales</h1>
+          <p className="mt-2 text-muted-foreground">Premium Technology Marketplace</p>
         </div>
 
-        <Card>
+        <Card className="border-none shadow-2xl">
           <CardHeader>
-            <CardTitle>Login</CardTitle>
-            <CardDescription>Enter your credentials to continue</CardDescription>
+            <CardTitle>Welcome Back</CardTitle>
+            <CardDescription>Sign in to continue your journey</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="mb-2 block text-sm">Email</label>
+              <div className="space-y-2">
+                <Label htmlFor="email">Email Address</Label>
                 <Input
+                  id="email"
                   type="email"
-                  placeholder="your@email.com"
+                  placeholder="john@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
                 />
               </div>
-              <div>
-                <label className="mb-2 block text-sm">Password</label>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password">Password</Label>
+                  <Link to="/auth/forgot-password" className="text-xs font-medium text-blue-600 hover:underline">
+                    Forgot password?
+                  </Link>
+                </div>
                 <Input
+                  id="password"
                   type="password"
                   placeholder="••••••••"
                   value={password}
@@ -63,50 +85,56 @@ export function LoginPage() {
                   required
                 />
               </div>
-              {error && (
-                <div className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
-                  {error}
+              
+              {loginError && (
+                <div className="flex items-center gap-2 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
+                  <KeyRound className="h-4 w-4" />
+                  {(loginError as any).message || 'Login failed'}
                 </div>
               )}
-              <Button type="submit" className="w-full">
-                Sign In
+
+              <Button type="submit" className="w-full h-12 text-lg font-bold" disabled={isLoading}>
+                {isLoading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
+                {isLoading ? 'Signing In...' : 'Sign In'}
               </Button>
             </form>
 
-            <div className="mt-6">
-              <p className="mb-3 text-center text-sm text-muted-foreground">Quick Login (Demo)</p>
-              <div className="grid grid-cols-2 gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => quickLogin('customer@email.com')}
-                >
-                  Customer
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => quickLogin('sales@techsales.com')}
-                >
-                  Sales Staff
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => quickLogin('business@techsales.com')}
-                >
-                  Business Admin
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => quickLogin('admin@techsales.com')}
-                >
-                  Tech Admin
-                </Button>
+            <div className="relative my-8">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-border" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-card px-2 text-muted-foreground">Demo Accounts</span>
               </div>
             </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { label: 'Customer', email: 'customer@email.com' },
+                { label: 'Sales', email: 'sales@techsales.com' },
+                { label: 'Business', email: 'business@techsales.com' },
+                { label: 'Admin', email: 'admin@techsales.com' }
+              ].map(demo => (
+                <Button
+                  key={demo.label}
+                  variant="outline"
+                  size="sm"
+                  className="text-xs h-10"
+                  onClick={() => quickLogin(demo.email)}
+                >
+                  {demo.label}
+                </Button>
+              ))}
+            </div>
           </CardContent>
+          <CardFooter className="flex justify-center border-t border-border/50 pt-6">
+            <div className="text-sm">
+              Don't have an account?{' '}
+              <Link to="/auth/signup" className="font-bold text-blue-600 hover:underline">
+                Create Account
+              </Link>
+            </div>
+          </CardFooter>
         </Card>
       </div>
     </div>

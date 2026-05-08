@@ -6,26 +6,27 @@ import {
   ChevronLeft, 
   ShieldCheck, 
   Truck, 
-  ArrowLeftRight, 
   Plus, 
   Minus,
   Loader2,
-  CheckCircle2,
-  Package
+  CheckCircle2
 } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
 import { Card, CardContent } from '../../components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
-import { useGetProduct, useGetProducts } from '../../../dataHook/productDataHook';
+import { useGetProduct } from '../../../dataHook/productDataHook';
+import { useGetProductReviews } from '../../../dataHook/reviewDataHook';
 import { useAddToCart } from '../../../dataHook/cartDataHook';
 import { toast } from 'sonner';
+import { Separator } from '../../components/ui/separator';
 
 export function ProductDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [quantity, setQuantity] = useState(1);
-  const { data: product, isLoading, isError } = useGetProduct(id || '');
+  const { data: product, isLoading: isProductLoading, isError } = useGetProduct(id || '');
+  const { data: reviews = [], isLoading: isReviewsLoading } = useGetProductReviews(id || '');
   const { mutate: addToCart, isPending: isAdding } = useAddToCart();
 
   useEffect(() => {
@@ -43,238 +44,226 @@ export function ProductDetailPage() {
     });
   };
 
-  if (isLoading || !product) {
+  if (isProductLoading || !product) {
     return (
       <div className="flex h-[70vh] items-center justify-center">
-        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-8 pb-12">
-      {/* Breadcrumbs / Back button */}
+    <div className="mx-auto max-w-6xl space-y-8 pb-16 px-4 md:px-0">
       <Button 
         variant="ghost" 
-        className="mb-4 pl-0 hover:bg-transparent" 
+        className="mb-2 pl-0 hover:bg-transparent font-bold text-muted-foreground hover:text-foreground transition-colors text-[10px] tracking-widest uppercase" 
         onClick={() => navigate(-1)}
       >
         <ChevronLeft className="mr-1 h-4 w-4" />
-        Back to Results
+        Back to Collection
       </Button>
 
-      <div className="grid grid-cols-1 gap-12 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-10 lg:grid-cols-2 items-start">
         {/* Product Images */}
         <div className="space-y-4">
-          <div className="aspect-square overflow-hidden rounded-3xl border border-border bg-white p-8">
+          <div className="aspect-square overflow-hidden rounded-2xl border border-border bg-card p-10">
             <img 
-              src={product.image} 
+              src={product.imageUrl || ''} 
               alt={product.name} 
-              className="h-full w-full object-contain transition-transform hover:scale-105"
+              className="h-full w-full object-contain transition-transform duration-500 hover:scale-105"
             />
-          </div>
-          <div className="grid grid-cols-4 gap-4">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="aspect-square cursor-pointer overflow-hidden rounded-xl border border-border bg-white p-2 hover:border-blue-500">
-                <img src={product.image} alt={product.name} className="h-full w-full object-contain opacity-50 hover:opacity-100" />
-              </div>
-            ))}
           </div>
         </div>
 
         {/* Product Info */}
         <div className="space-y-6">
           <div className="space-y-2">
-            <Badge variant="secondary" className="bg-blue-50 text-blue-600 dark:bg-blue-900/20">{product.category}</Badge>
-            <h1 className="text-4xl font-bold tracking-tight">{product.name}</h1>
+            <Badge className="bg-primary text-primary-foreground px-2.5 py-0.5 rounded-md font-bold text-[8px] uppercase tracking-wider border-none">{product.categoryName || 'General'}</Badge>
+            <h1 className="text-3xl font-bold tracking-tight text-foreground uppercase">{product.name}</h1>
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-1">
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <Star 
-                    key={i} 
-                    className={`h-4 w-4 ${i <= Math.floor(product.rating) ? 'fill-yellow-400 text-yellow-400' : 'text-slate-300'}`} 
-                  />
-                ))}
-                <span className="ml-2 text-sm font-medium">{product.rating}</span>
+                <Star className="h-3.5 w-3.5 fill-primary text-primary" />
+                <span className="text-sm font-bold text-foreground">{product.rating || 0}</span>
               </div>
-              <span className="text-sm text-muted-foreground">|</span>
-              <span className="text-sm text-muted-foreground">{product.reviews} Customer Reviews</span>
+              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{reviews.length} Verified Reviews</span>
             </div>
           </div>
 
-          <div className="space-y-1">
-             <div className="text-3xl font-bold text-slate-900 dark:text-white">
-                ${product.price.toLocaleString()}
-             </div>
-             <p className="text-sm text-muted-foreground">Tax included. Shipping calculated at checkout.</p>
+          <div className="flex items-baseline gap-2">
+            <span className="text-4xl font-bold text-foreground tracking-tight">${product.price.toLocaleString()}</span>
+            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">USD</span>
           </div>
 
-          <p className="text-lg leading-relaxed text-slate-600 dark:text-slate-300">
+          <p className="text-base leading-relaxed text-muted-foreground font-medium">
             {product.description}
           </p>
 
-          <div className="space-y-4 border-y border-border py-6">
-            <div className="flex items-center gap-4">
-              <span className="w-24 font-medium">Quantity</span>
-              <div className="flex items-center gap-3">
-                <button 
-                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="flex h-10 w-10 items-center justify-center rounded-xl border border-border hover:bg-accent"
-                >
-                  <Minus className="h-4 w-4" />
-                </button>
-                <span className="w-8 text-center font-bold">{quantity}</span>
-                <button 
-                  onClick={() => setQuantity(quantity + 1)}
-                  className="flex h-10 w-10 items-center justify-center rounded-xl border border-border hover:bg-accent"
-                >
-                  <Plus className="h-4 w-4" />
-                </button>
+          <div className="space-y-6 pt-4 border-t border-border">
+            <div className="flex items-center gap-8">
+              <div className="flex flex-col gap-1.5">
+                <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground ml-0.5">Quantity</span>
+                <div className="flex items-center gap-1 bg-muted/50 p-1 rounded-xl border border-border/50">
+                  <button 
+                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                    className="flex h-9 w-9 items-center justify-center rounded-lg bg-card shadow-sm border border-border transition-colors hover:bg-muted"
+                  >
+                    <Minus className="h-3.5 w-3.5" />
+                  </button>
+                  <span className="w-10 text-center font-bold text-base">{quantity}</span>
+                  <button 
+                    onClick={() => setQuantity(quantity + 1)}
+                    className="flex h-9 w-9 items-center justify-center rounded-lg bg-card shadow-sm border border-border transition-colors hover:bg-muted"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                  </button>
+                </div>
               </div>
-              <span className="ml-4 text-sm text-muted-foreground">
-                {product.stock} units available
-              </span>
+              <div className="pt-5">
+                <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest">
+                  Stock: <span className="text-foreground font-bold">{product.stock} units</span>
+                </span>
+              </div>
             </div>
 
-            <div className="flex gap-4">
+            <div className="flex gap-3">
               <Button 
                 size="lg" 
-                className="h-14 flex-1 rounded-2xl text-lg font-bold"
+                className="h-12 flex-[2] rounded-xl text-xs font-bold bg-primary text-primary-foreground uppercase tracking-widest hover:opacity-90 transition-all"
                 onClick={handleAddToCart}
                 disabled={isAdding || product.stock === 0}
               >
-                {isAdding ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <ShoppingCart className="mr-2 h-5 w-5" />}
-                {isAdding ? 'Adding...' : 'Add to Cart'}
+                {isAdding ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ShoppingCart className="mr-2 h-4 w-4" />}
+                Add to Cart
               </Button>
               <Button 
                 size="lg" 
                 variant="outline" 
-                className="h-14 flex-1 rounded-2xl text-lg font-bold border-blue-600 text-blue-600 hover:bg-blue-50"
+                className="h-12 flex-1 rounded-xl text-xs font-bold border-border uppercase tracking-widest hover:bg-muted transition-all"
+                onClick={() => {
+                  handleAddToCart();
+                  navigate('/customer/checkout');
+                }}
+                disabled={isAdding || product.stock === 0}
               >
                 Buy Now
               </Button>
             </div>
           </div>
 
-          {/* Delivery & Security Info */}
           <div className="grid grid-cols-2 gap-4">
-            <div className="flex items-start gap-3 rounded-2xl bg-slate-50 p-4 dark:bg-slate-900/50">
-              <Truck className="mt-1 h-5 w-5 text-blue-600" />
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/30 border border-border/50">
+              <Truck className="h-5 w-5 text-muted-foreground" />
               <div>
-                <h4 className="text-sm font-bold">Fast Delivery</h4>
-                <p className="text-xs text-muted-foreground">Ships in 24-48 hours</p>
+                <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Logistics</p>
+                <p className="font-bold text-xs uppercase tracking-tight">Express Shipping</p>
               </div>
             </div>
-            <div className="flex items-start gap-3 rounded-2xl bg-slate-50 p-4 dark:bg-slate-900/50">
-              <ShieldCheck className="mt-1 h-5 w-5 text-emerald-600" />
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/30 border border-border/50">
+              <ShieldCheck className="h-5 w-5 text-muted-foreground" />
               <div>
-                <h4 className="text-sm font-bold">Genuine Product</h4>
-                <p className="text-xs text-muted-foreground">Official brand warranty</p>
+                <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Warranty</p>
+                <p className="font-bold text-xs uppercase tracking-tight">12 Months</p>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Tabs Section */}
-      <Tabs defaultValue="description" className="w-full">
-        <TabsList className="h-14 w-full justify-start gap-8 border-b border-border bg-transparent p-0 rounded-none">
-          <TabsTrigger 
-            value="description" 
-            className="h-14 rounded-none border-b-2 border-transparent px-2 font-bold data-[state=active]:border-blue-600 data-[state=active]:bg-transparent data-[state=active]:text-blue-600"
-          >
-            Description
-          </TabsTrigger>
-          <TabsTrigger 
-            value="specs" 
-            className="h-14 rounded-none border-b-2 border-transparent px-2 font-bold data-[state=active]:border-blue-600 data-[state=active]:bg-transparent data-[state=active]:text-blue-600"
-          >
-            Specifications
-          </TabsTrigger>
+      <Tabs defaultValue="reviews" className="w-full mt-10">
+        <TabsList className="h-12 w-full justify-start gap-8 border-b border-border bg-transparent p-0">
           <TabsTrigger 
             value="reviews" 
-            className="h-14 rounded-none border-b-2 border-transparent px-2 font-bold data-[state=active]:border-blue-600 data-[state=active]:bg-transparent data-[state=active]:text-blue-600"
+            className="h-12 rounded-none border-b-2 border-transparent px-1 font-bold uppercase tracking-widest text-[10px] text-muted-foreground data-[state=active]:border-primary data-[state=active]:text-foreground transition-all"
           >
-            Reviews ({product.reviews})
+            Reviews ({reviews.length})
+          </TabsTrigger>
+          <TabsTrigger 
+            value="description" 
+            className="h-12 rounded-none border-b-2 border-transparent px-1 font-bold uppercase tracking-widest text-[10px] text-muted-foreground data-[state=active]:border-primary data-[state=active]:text-foreground transition-all"
+          >
+            Details
           </TabsTrigger>
         </TabsList>
-        <TabsContent value="description" className="py-8">
-          <div className="max-w-3xl space-y-4">
-            <h3 className="text-xl font-bold">Experience the next generation of {product.category}</h3>
-            <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
-              {product.description}. This premium product from {product.brand} combines state-of-the-art technology 
-              with elegant design. Whether you're a professional looking for performance or a casual user 
-              seeking reliability, this device delivers on every front.
-            </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
-               <div className="flex items-center gap-3">
-                  <CheckCircle2 className="h-5 w-5 text-emerald-500" />
-                  <span>High-performance components</span>
-               </div>
-               <div className="flex items-center gap-3">
-                  <CheckCircle2 className="h-5 w-5 text-emerald-500" />
-                  <span>Energy-efficient design</span>
-               </div>
-               <div className="flex items-center gap-3">
-                  <CheckCircle2 className="h-5 w-5 text-emerald-500" />
-                  <span>Premium materials & build quality</span>
-               </div>
-               <div className="flex items-center gap-3">
-                  <CheckCircle2 className="h-5 w-5 text-emerald-500" />
-                  <span>Cloud synchronization ready</span>
-               </div>
+        
+        <TabsContent value="reviews" className="py-8">
+          <div className="flex flex-col gap-10 lg:flex-row">
+            <div className="w-full lg:w-64">
+              <div className="p-6 rounded-2xl bg-muted/30 text-center space-y-1 border border-border/50">
+                <div className="text-5xl font-bold text-foreground tracking-tighter">{product.rating || 0}</div>
+                <div className="flex justify-center gap-1">
+                  {[1,2,3,4,5].map(i => (
+                    <Star key={i} className={`h-3.5 w-3.5 ${i <= (product.rating || 0) ? 'fill-primary text-primary' : 'text-muted'}`} />
+                  ))}
+                </div>
+                <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Global Score</p>
+              </div>
+            </div>
+
+            <div className="flex-1 space-y-6">
+              <h3 className="text-xl font-bold uppercase tracking-tight text-foreground">Recent Feedback</h3>
+              {isReviewsLoading ? (
+                <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
+              ) : reviews.length === 0 ? (
+                <div className="py-12 text-center text-muted-foreground font-bold uppercase tracking-widest bg-muted/20 rounded-2xl border border-dashed border-border">
+                  No feedback yet
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {reviews.map((rev) => (
+                    <div key={rev.id} className="p-6 rounded-2xl bg-card border border-border transition-shadow hover:shadow-sm">
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="h-10 w-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm">
+                              {rev.userName.charAt(0)}
+                            </div>
+                            <div>
+                              <p className="font-bold text-sm uppercase tracking-tight">{rev.userName}</p>
+                              <div className="flex gap-0.5">
+                                {[1,2,3,4,5].map(j => (
+                                  <Star key={j} className={`h-2.5 w-2.5 ${j <= rev.rating ? 'fill-primary text-primary' : 'text-muted'}`} />
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                          <span className="text-[9px] font-medium text-muted-foreground uppercase tracking-widest">
+                            {new Date(rev.createdAt).toLocaleDateString()}
+                          </span>
+                        </div>
+                        <p className="text-sm text-muted-foreground leading-relaxed font-medium italic">
+                          "{rev.comment}"
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </TabsContent>
-        <TabsContent value="specs" className="py-8">
-          <div className="max-w-2xl overflow-hidden rounded-2xl border border-border">
-            <table className="w-full">
-              <tbody className="divide-y divide-border">
-                {[
-                  { label: 'Brand', value: product.brand },
-                  { label: 'Model', value: product.id },
-                  { label: 'Category', value: product.category },
-                  { label: 'Weight', value: '1.2 kg' },
-                  { label: 'Warranty', value: '12 Months' },
-                  { label: 'In the Box', value: 'Device, Charger, User Manual' }
-                ].map((spec) => (
-                  <tr key={spec.label}>
-                    <td className="bg-slate-50 px-6 py-4 text-sm font-medium dark:bg-slate-900/30">{spec.label}</td>
-                    <td className="px-6 py-4 text-sm">{spec.value}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </TabsContent>
-        <TabsContent value="reviews" className="py-8">
-          <div className="flex flex-col gap-8 md:flex-row">
-             <div className="w-full md:w-64 space-y-4">
-                <div className="text-center md:text-left">
-                   <div className="text-5xl font-bold">{product.rating}</div>
-                   <div className="my-2 flex justify-center md:justify-start gap-1">
-                      {[1,2,3,4,5].map(i => <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />)}
-                   </div>
-                   <p className="text-sm text-muted-foreground">Based on {product.reviews} reviews</p>
-                </div>
-             </div>
-             <div className="flex-1 space-y-6">
-                <h3 className="text-xl font-bold">Most Recent Reviews</h3>
-                {[1, 2].map(i => (
-                  <div key={i} className="space-y-2 border-b border-border pb-6 last:border-0">
-                    <div className="flex items-center justify-between">
-                       <span className="font-bold">Happy Customer {i}</span>
-                       <span className="text-xs text-muted-foreground">2 weeks ago</span>
+
+        <TabsContent value="description" className="py-8">
+          <div className="max-w-3xl space-y-6">
+            <h3 className="text-xl font-bold uppercase tracking-tight text-foreground">Specifications</h3>
+            <p className="text-base text-muted-foreground leading-relaxed font-medium">
+              {product.description}. Optimized for high-performance workflows and industrial durability.
+            </p>
+            <Separator className="bg-border" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+               {[
+                 'Industrial durability',
+                 'Sustainable sourcing',
+                 'Optimized cooling',
+                 'Ecosystem ready'
+               ].map((feature, idx) => (
+                 <div key={idx} className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-xl bg-muted/50 flex items-center justify-center">
+                      <CheckCircle2 className="h-5 w-5 text-primary" />
                     </div>
-                    <div className="flex gap-1">
-                       {[1,2,3,4,5].map(j => <Star key={j} className="h-3 w-3 fill-yellow-400 text-yellow-400" />)}
-                    </div>
-                    <p className="text-sm text-slate-600 dark:text-slate-400">
-                       Amazing product! Totally exceeded my expectations. The quality is top-notch.
-                    </p>
-                  </div>
-                ))}
-             </div>
+                    <span className="font-bold text-xs text-foreground uppercase tracking-tight">{feature}</span>
+                 </div>
+               ))}
+            </div>
           </div>
         </TabsContent>
       </Tabs>

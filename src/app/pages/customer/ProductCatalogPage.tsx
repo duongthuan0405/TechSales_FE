@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '../../components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import {
@@ -10,18 +10,60 @@ import {
   SelectValue,
 } from "../../components/ui/select";
 import { Badge } from '../../components/ui/badge';
-import { ShoppingCart, Star, Search, Loader2 } from 'lucide-react';
+import { 
+  ShoppingCart, 
+  Star, 
+  Search, 
+  Loader2, 
+  X,
+  Plus,
+  ArrowUpDown,
+  Tag,
+  DollarSign
+} from 'lucide-react';
 import { useGetProducts } from '../../../dataHook/productDataHook';
+import { useGetCategories } from '../../../dataHook/categoryDataHook';
 import { useAddToCart } from '../../../dataHook/cartDataHook';
 import { toast } from 'sonner';
-import { useNavigate } from 'react-router';
+import { useNavigate, useSearchParams } from 'react-router';
 
 export function ProductCatalogPage() {
   const navigate = useNavigate();
-  const { data: products = [], isLoading, isError } = useGetProducts();
-  const { mutate: addToCart, isPending: isAdding } = useAddToCart();
+  const [searchParams, setSearchParams] = useSearchParams();
+  
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  
+  const selectedCategory = searchParams.get('category') || 'all';
+  const [minPrice, setMinPrice] = useState<string>('');
+  const [maxPrice, setMaxPrice] = useState<string>('');
+  const [sortBy, setSortBy] = useState<string>('newest');
+
+  const setSelectedCategory = (category: string) => {
+    const newParams = new URLSearchParams(searchParams);
+    if (category === 'all') {
+      newParams.delete('category');
+    } else {
+      newParams.set('category', category);
+    }
+    setSearchParams(newParams);
+  };
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchTerm), 500);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  const { data: products = [], isLoading, isError } = useGetProducts({
+    search: debouncedSearch,
+    category: selectedCategory,
+    minPrice: minPrice ? Number(minPrice) : undefined,
+    maxPrice: maxPrice ? Number(maxPrice) : undefined,
+    sortBy: sortBy as any
+  });
+
+  const { data: categoriesData = [] } = useGetCategories();
+  const { mutate: addToCart, isPending: isAdding } = useAddToCart();
 
   useEffect(() => {
     if (isError) {
@@ -29,105 +71,188 @@ export function ProductCatalogPage() {
     }
   }, [isError]);
 
-  const categories = ['all', ...Array.from(new Set(products.map(p => p.category)))];
-
-  const filteredProducts = products.filter(product => {
-    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.brand.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
-
   const handleAddToCart = (productId: string) => {
     addToCart(productId, {
-      onSuccess: () => {
-        toast.success('Added to cart');
-      },
-      onError: () => {
-        toast.error('Failed to add to cart');
-      }
+      onSuccess: () => toast.success('Added to cart'),
+      onError: () => toast.error('Failed to add to cart')
     });
   };
 
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Products</h1>
-        <p className="text-muted-foreground">Browse our technology products</p>
-      </div>
+  const clearFilters = () => {
+    setSelectedCategory('all');
+    setMinPrice('');
+    setMaxPrice('');
+    setSearchTerm('');
+    setSortBy('newest');
+  };
 
-      <div className="flex flex-col gap-4 sm:flex-row">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+  return (
+    <div className="mx-auto max-w-7xl space-y-6 pb-12 px-4 md:px-0">
+      {/* Header & Search */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="space-y-0.5">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground uppercase">Catalog</h1>
+          <p className="text-sm text-muted-foreground font-medium">Premium technology essentials.</p>
+        </div>
+        
+        <div className="relative w-full md:w-[450px]">
+          <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Search products..."
+            placeholder="Search our collection..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-9"
+            className="pl-11 h-12 rounded-xl border-none bg-card shadow-sm ring-1 ring-border focus-visible:ring-2 focus-visible:ring-primary transition-all text-base"
           />
         </div>
-        <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="All Categories" />
-          </SelectTrigger>
-          <SelectContent>
-            {categories.map(cat => (
-              <SelectItem key={cat} value={cat}>
-                {cat === 'all' ? 'All Categories' : cat}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
       </div>
 
-      {isLoading ? (
-        <div className="flex h-64 items-center justify-center">
-          <div className="flex flex-col items-center gap-2">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p className="text-muted-foreground">Loading products...</p>
+      {/* Horizontal Filter Bar */}
+      <Card className="border-none shadow-sm bg-muted/30 rounded-2xl overflow-hidden">
+        <CardContent className="p-4 md:p-5">
+          <div className="flex flex-wrap items-center gap-5">
+            {/* Category */}
+            <div className="flex-1 min-w-[150px]">
+              <div className="flex items-center gap-2 mb-1.5 ml-1">
+                <Tag className="h-3 w-3 text-muted-foreground" />
+                <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Category</span>
+              </div>
+              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                <SelectTrigger className="h-10 rounded-lg border-border bg-card">
+                  <SelectValue placeholder="All Categories" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Categories</SelectItem>
+                  {categoriesData.map(cat => (
+                    <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Price */}
+            <div className="flex-[1.5] min-w-[220px]">
+              <div className="flex items-center gap-2 mb-1.5 ml-1">
+                <DollarSign className="h-3 w-3 text-muted-foreground" />
+                <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Price Range</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Input 
+                  placeholder="Min" 
+                  type="number" 
+                  value={minPrice} 
+                  onChange={(e) => setMinPrice(e.target.value)}
+                  className="h-10 rounded-lg border-border bg-card font-medium"
+                />
+                <span className="text-muted">-</span>
+                <Input 
+                  placeholder="Max" 
+                  type="number" 
+                  value={maxPrice} 
+                  onChange={(e) => setMaxPrice(e.target.value)}
+                  className="h-10 rounded-lg border-border bg-card font-medium"
+                />
+              </div>
+            </div>
+
+            {/* Sort */}
+            <div className="flex-1 min-w-[150px]">
+              <div className="flex items-center gap-2 mb-1.5 ml-1">
+                <ArrowUpDown className="h-3 w-3 text-muted-foreground" />
+                <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Sort by</span>
+              </div>
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="h-10 rounded-lg border-border bg-card">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="newest">Newest First</SelectItem>
+                  <SelectItem value="price_asc">Price: Low to High</SelectItem>
+                  <SelectItem value="price_desc">Price: High to Low</SelectItem>
+                  <SelectItem value="rating">Top Rated</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="pt-4 flex flex-col justify-end">
+              <Button 
+                variant="outline" 
+                onClick={clearFilters}
+                className="h-10 px-4 rounded-lg border-border text-foreground font-bold hover:bg-primary hover:text-primary-foreground transition-all text-xs uppercase tracking-widest"
+              >
+                Clear
+              </Button>
+            </div>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Results Info */}
+      <div className="flex items-center justify-between px-1">
+        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+          <span className="text-foreground">{products.length}</span> Objects Found
+        </p>
+      </div>
+
+      {/* Product Grid */}
+      {isLoading ? (
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
+            <div key={i} className="h-[350px] rounded-2xl bg-muted/50 animate-pulse" />
+          ))}
+        </div>
+      ) : products.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-20 text-center bg-card rounded-3xl ring-1 ring-border">
+          <Search className="h-10 w-10 text-muted mb-4" />
+          <h3 className="text-xl font-bold text-foreground">No Results</h3>
+          <p className="text-muted-foreground mt-2 max-w-xs mx-auto text-sm font-medium">
+            Try a different term or reset filters.
+          </p>
+          <Button variant="link" onClick={clearFilters} className="mt-4 text-primary font-bold underline underline-offset-4 text-sm">
+            Reset All
+          </Button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {filteredProducts.map(product => (
-            <Card key={product.id} className="cursor-pointer transition-all hover:shadow-md" onClick={() => navigate(`/customer/products/${product.id}`)}>
-              <CardHeader>
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          {products.map(product => (
+            <Card 
+              key={product.id} 
+              className="group overflow-hidden rounded-2xl border-none shadow-sm ring-1 ring-border transition-all hover:-translate-y-1 hover:shadow-md cursor-pointer bg-card"
+              onClick={() => navigate(`/customer/products/${product.id}`)}
+            >
+              <div className="relative aspect-square overflow-hidden bg-muted/30">
                 <img
-                  src={product.image}
+                  src={product.imageUrl || ''}
                   alt={product.name}
-                  className="mb-4 h-48 w-full rounded-lg object-cover"
+                  className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105 grayscale-[0.3] group-hover:grayscale-0"
                 />
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <CardTitle className="text-lg">{product.name}</CardTitle>
-                    <p className="text-sm text-muted-foreground">{product.brand}</p>
-                  </div>
-                  <Badge variant="secondary">{product.category}</Badge>
+                <div className="absolute right-3 top-3">
+                  <Badge className="bg-primary text-primary-foreground border-none font-bold text-[8px] uppercase tracking-wider px-2 py-0.5 rounded-md">
+                    {product.categoryName}
+                  </Badge>
                 </div>
-              </CardHeader>
-              <CardContent>
-                <p className="mb-4 text-sm text-muted-foreground line-clamp-2">{product.description}</p>
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="flex items-center gap-1">
-                    <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                    <span className="text-sm font-medium">{product.rating}</span>
+              </div>
+              <CardContent className="p-5">
+                <div className="mb-2.5 flex items-center justify-between">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{product.brand}</p>
+                  <div className="flex items-center gap-1.5 bg-muted/50 px-2 py-0.5 rounded-full">
+                    <Star className="h-3.5 w-3.5 fill-primary text-primary" />
+                    <span className="text-xs font-bold text-foreground">{product.rating}</span>
                   </div>
-                  <span className="text-sm text-muted-foreground">({product.reviews} reviews)</span>
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  {product.stock > 0 ? `${product.stock} in stock` : 'Out of stock'}
-                </p>
+                <CardTitle className="mb-4 text-base font-bold leading-snug line-clamp-1 text-foreground">{product.name}</CardTitle>
+                <div className="flex items-center justify-between">
+                  <span className="text-xl font-bold text-foreground tracking-tight">
+                    ${product.price.toLocaleString()}
+                  </span>
+                  <Button
+                    onClick={(e) => { e.stopPropagation(); handleAddToCart(product.id); }}
+                    disabled={product.stock === 0 || isAdding}
+                    className="h-10 w-10 rounded-xl p-0 bg-primary text-primary-foreground hover:opacity-90 shadow-sm"
+                  >
+                    {isAdding ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+                  </Button>
+                </div>
               </CardContent>
-              <CardFooter className="flex items-center justify-between">
-                <div className="text-2xl font-bold">${product.price.toLocaleString()}</div>
-                <Button
-                  onClick={(e) => { e.stopPropagation(); handleAddToCart(product.id); }}
-                  disabled={product.stock === 0 || isAdding}
-                >
-                  {isAdding ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ShoppingCart className="mr-2 h-4 w-4" />}
-                  {isAdding ? 'Adding...' : 'Add to Cart'}
-                </Button>
-              </CardFooter>
             </Card>
           ))}
         </div>

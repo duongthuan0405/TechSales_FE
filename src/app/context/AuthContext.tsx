@@ -1,11 +1,10 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
-import { users } from '../../data/mockData';
-import { UserRole, AuthUser } from '../../models/ui_types/models';
-
+import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { AuthUser, UserRole } from '../../models/ui_types/user';
 
 interface AuthContextType {
   user: AuthUser | null;
-  login: (email: string, password: string) => boolean;
+  isLoading: boolean;
+  setAuthUser: (user: AuthUser | null) => void;
   logout: () => void;
   switchRole: (role: UserRole) => void;
 }
@@ -14,33 +13,43 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const login = (email: string, password: string): boolean => {
-    const foundUser = users.find(u => u.email === email);
-    if (foundUser) {
-      setUser({
-        id: foundUser.id,
-        name: foundUser.name,
-        email: foundUser.email,
-        role: foundUser.role,
-      });
-      return true;
+  // Load user from localStorage on init
+  useEffect(() => {
+    const savedUser = localStorage.getItem('tech_sales_user');
+    if (savedUser) {
+      try {
+        setUser(JSON.parse(savedUser));
+      } catch (e) {
+        localStorage.removeItem('tech_sales_user');
+      }
     }
-    return false;
+    setIsLoading(false);
+  }, []);
+
+  const setAuthUser = (newUser: AuthUser | null) => {
+    setUser(newUser);
+    if (newUser) {
+      localStorage.setItem('tech_sales_user', JSON.stringify(newUser));
+    } else {
+      localStorage.removeItem('tech_sales_user');
+    }
   };
 
   const logout = () => {
-    setUser(null);
+    setAuthUser(null);
   };
 
   const switchRole = (role: UserRole) => {
     if (user) {
-      setUser({ ...user, role });
+      const updatedUser = { ...user, role };
+      setAuthUser(updatedUser);
     }
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, switchRole }}>
+    <AuthContext.Provider value={{ user, isLoading, setAuthUser, logout, switchRole }}>
       {children}
     </AuthContext.Provider>
   );

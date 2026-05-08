@@ -1,12 +1,24 @@
-import { mockCart } from '../data/mockData';
-import { CartItem } from '../models/ui_types/models';
+import { mockCart, products } from '../data/mockData';
+import { CartItem } from '../models/ui_types/cart';
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+const joinProductDetails = (items: any[]): CartItem[] => {
+  return items.map(item => {
+    const product = products.find(p => p.id === item.productId);
+    return {
+      ...item,
+      productName: product?.name,
+      price: product?.price,
+      imageUrl: product?.imageUrl
+    };
+  });
+};
 
 export const cartService = {
   getCart: async (): Promise<CartItem[]> => {
     await delay(600);
-    return [...mockCart];
+    return joinProductDetails([...mockCart]);
   },
 
   addToCart: async (productId: string): Promise<CartItem[]> => {
@@ -15,9 +27,9 @@ export const cartService = {
     if (existing) {
       existing.quantity += 1;
     } else {
-      mockCart.push({ productId, quantity: 1 });
+      mockCart.push({ cartId: 'default', productId, quantity: 1 });
     }
-    return [...mockCart];
+    return joinProductDetails([...mockCart]);
   },
 
   updateQuantity: async (productId: string, quantity: number): Promise<CartItem[]> => {
@@ -30,7 +42,7 @@ export const cartService = {
         mockCart[index].quantity = quantity;
       }
     }
-    return [...mockCart];
+    return joinProductDetails([...mockCart]);
   },
 
   removeItem: async (productId: string): Promise<CartItem[]> => {
@@ -39,7 +51,7 @@ export const cartService = {
     if (index !== -1) {
       mockCart.splice(index, 1);
     }
-    return [...mockCart];
+    return joinProductDetails([...mockCart]);
   },
 
   clearCart: async (): Promise<void> => {

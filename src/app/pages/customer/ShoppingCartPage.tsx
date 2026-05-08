@@ -5,20 +5,25 @@ import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
 import { Modal } from '../../components/ui/modal';
 import { Trash2, Plus, Minus, Loader2 } from 'lucide-react';
-import { products } from '../../../data/mockData';
-import { useCreateOrder } from '../../../dataHook/orderDataHook';
+import { useCreateOrder, useCheckoutSummary } from '../../../dataHook/orderDataHook';
 import { useGetCart, useUpdateCartQuantity, useRemoveFromCart, useClearCart } from '../../../dataHook/cartDataHook';
 import { toast } from 'sonner';
 
 export function ShoppingCartPage() {
   const navigate = useNavigate();
-  const [showCheckoutModal, setShowCheckoutModal] = useState(false);
   
   const { data: cartItems = [], isLoading, isError } = useGetCart();
   const { mutate: updateQuantity, isPending: isUpdating } = useUpdateCartQuantity();
   const { mutate: removeItem, isPending: isRemoving } = useRemoveFromCart();
   const { mutate: clearCart } = useClearCart();
-  const { mutate: createOrder, isPending: isCreatingOrder } = useCreateOrder();
+  const { mutate: createOrder } = useCreateOrder();
+
+  const { data: summary } = useCheckoutSummary({
+    items: cartItems.map(i => ({ productId: i.productId, quantity: i.quantity }))
+  });
+
+  const subtotal = summary?.subtotal || 0;
+  const total = summary?.total || 0;
 
   useEffect(() => {
     if (isError) {
@@ -26,17 +31,8 @@ export function ShoppingCartPage() {
     }
   }, [isError]);
 
-  const cartWithDetails = cartItems.map(item => {
-    const product = products.find(p => p.id === item.productId);
-    return { ...item, product };
-  }).filter(item => item.product);
-
-  const subtotal = cartWithDetails.reduce((sum, item) => sum + (item.product!.price * item.quantity), 0);
-  const tax = subtotal * 0.08;
-  const total = subtotal + tax;
-
   const handleCheckout = () => {
-    setShowCheckoutModal(true);
+    navigate('/customer/checkout');
   };
 
   const handleUpdateQuantity = (productId: string, quantity: number) => {
@@ -56,13 +52,11 @@ export function ShoppingCartPage() {
     createOrder({
       items: cartItems,
       total,
-      subtotal,
-      tax
+      subtotal
     }, {
       onSuccess: () => {
         clearCart(undefined, {
           onSuccess: () => {
-            setShowCheckoutModal(false);
             toast.success('Order placed successfully!');
             navigate('/customer/orders');
           }
@@ -102,20 +96,19 @@ export function ShoppingCartPage() {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-4">
-          {cartWithDetails.map(item => (
+          {cartItems.map(item => (
             <Card key={item.productId}>
               <CardContent className="flex gap-4 p-6">
                 <img
-                  src={item.product!.image}
-                  alt={item.product!.name}
+                  src={item.imageUrl}
+                  alt={item.productName}
                   className="h-24 w-24 rounded-lg object-cover"
                 />
                 <div className="flex-1">
                   <div className="flex items-start justify-between">
                     <div>
-                      <h3 className="font-semibold">{item.product!.name}</h3>
-                      <p className="text-sm text-muted-foreground">{item.product!.brand}</p>
-                      <Badge variant="secondary" className="mt-2">{item.product!.category}</Badge>
+                      <h3 className="font-semibold">{item.productName}</h3>
+                      <p className="text-sm text-muted-foreground">Product ID: {item.productId}</p>
                     </div>
                     <button
                       onClick={() => handleRemoveItem(item.productId)}
@@ -144,7 +137,7 @@ export function ShoppingCartPage() {
                       </button>
                     </div>
                     <div className="text-xl font-bold">
-                      ${(item.product!.price * item.quantity).toLocaleString()}
+                      ${((item.price || 0) * item.quantity).toLocaleString()}
                     </div>
                   </div>
                 </div>
@@ -163,10 +156,6 @@ export function ShoppingCartPage() {
                 <span className="text-muted-foreground">Subtotal</span>
                 <span>${subtotal.toFixed(2)}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Tax (8%)</span>
-                <span>${tax.toFixed(2)}</span>
-              </div>
               <div className="border-t border-border pt-4">
                 <div className="flex justify-between">
                   <span className="font-semibold">Total</span>
@@ -183,38 +172,6 @@ export function ShoppingCartPage() {
         </div>
       </div>
 
-      <Modal
-        open={showCheckoutModal}
-        onOpenChange={setShowCheckoutModal}
-        title="Checkout"
-        description="Complete your order"
-        size="md"
-        footer={
-          <>
-            <Button 
-              variant="outline" 
-              onClick={() => setShowCheckoutModal(false)}
-              disabled={isCreatingOrder}
-            >
-              Cancel
-            </Button>
-            <Button 
-              onClick={handleConfirmCheckout}
-              disabled={isCreatingOrder}
-            >
-              {isCreatingOrder && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {isCreatingOrder ? 'Processing...' : 'Confirm Order'}
-            </Button>
-          </>
-        }
-      >
-        <div className="space-y-4">
-          <p>Your order will be placed once you confirm.</p>
-          <p className="text-sm text-muted-foreground">
-            You will receive a confirmation email shortly after confirmation.
-          </p>
-        </div>
-      </Modal>
     </div>
   );
 }

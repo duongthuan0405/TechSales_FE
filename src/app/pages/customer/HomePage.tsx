@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { ArrowRight, ShoppingCart, Star, Zap, TrendingUp, ShieldCheck, Truck, Headphones, Loader2 } from 'lucide-react';
+import { ArrowRight, ShoppingCart, Star, Zap, TrendingUp, ShieldCheck, Truck, Headphones, Loader2, Plus } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Card, CardContent } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
@@ -14,7 +14,7 @@ export function HomePage() {
   const navigate = useNavigate();
   const { data: products = [], isLoading: productsLoading, isError: productsError } = useGetProducts();
   const { data: categories = [], isLoading: categoriesLoading, isError: categoriesError } = useGetCategories();
-  const { mutate: addToCart } = useAddToCart();
+  const { mutate: addToCart, isPending: isAdding } = useAddToCart();
 
   useEffect(() => {
     if (productsError) toast.error('Failed to load products');
@@ -32,50 +32,67 @@ export function HomePage() {
   };
 
   return (
-    <div className="space-y-12 pb-12">
+    <div className="space-y-16 pb-20">
       {/* Hero Section */}
-      <section className="relative overflow-hidden rounded-3xl bg-slate-900 text-white">
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-purple-600/20" />
-        <div className="relative flex flex-col items-center justify-center px-6 py-20 text-center md:py-32">
-          <Badge className="mb-4 bg-blue-500 hover:bg-blue-600">New Season 2026</Badge>
-          <h1 className="mb-6 text-4xl font-extrabold tracking-tight md:text-6xl">
-            Future of Tech <br /> 
-            <span className="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">In Your Hands</span>
+      <section className="relative overflow-hidden rounded-[2.5rem] bg-zinc-950 text-white min-h-[550px] flex items-center shadow-2xl">
+        <div className="absolute inset-0">
+           <img 
+             src="https://images.unsplash.com/photo-1550009158-9ebf69173e03?q=80&w=2101&auto=format&fit=crop" 
+             className="h-full w-full object-cover opacity-60"
+             alt="Future Tech"
+           />
+           <div className="absolute inset-0 bg-gradient-to-r from-zinc-950 via-zinc-950/80 to-transparent" />
+        </div>
+        
+        <div className="relative z-10 flex flex-col items-start px-10 py-16 text-left md:py-24 max-w-2xl">
+          <Badge className="mb-6 bg-white text-black border-none font-bold tracking-widest uppercase px-5 py-2 rounded-full text-[11px]">
+            New Horizon 2026
+          </Badge>
+          <h1 className="mb-6 text-5xl font-bold tracking-tighter md:text-7xl uppercase leading-[0.85] text-white">
+            Precision <br /> 
+            <span className="text-white/40">Engineering</span>
           </h1>
-          <p className="mb-10 max-w-2xl text-lg text-slate-300">
-            Explore the latest innovations in computing, mobile, and gaming. 
-            Exclusive deals for our premium members.
+          <p className="mb-10 text-xl text-zinc-300 font-normal leading-relaxed max-w-md">
+            The next generation of professional hardware is here. Engineered for elite performance.
           </p>
-          <div className="flex flex-wrap justify-center gap-4">
-            <Button size="lg" className="h-12 px-8" onClick={() => navigate('/customer/products')}>
-              Shop Now <ArrowRight className="ml-2 h-5 w-5" />
+          <div className="flex flex-wrap gap-4">
+            <Button size="lg" className="h-14 px-10 rounded-2xl bg-white text-black hover:bg-zinc-200 font-bold uppercase tracking-widest text-xs" onClick={() => navigate('/customer/products')}>
+              Shop Now <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
-            <Button size="lg" variant="outline" className="h-12 border-slate-700 px-8 text-white hover:bg-slate-800">
-              View Deals
+            <Button size="lg" variant="outline" className="h-14 border-white/20 bg-white/5 backdrop-blur-md px-10 text-white hover:bg-white/10 rounded-2xl font-bold uppercase tracking-widest text-xs">
+              Our Vision
             </Button>
           </div>
         </div>
       </section>
 
       {/* Categories */}
-      <section>
-        <div className="mb-8 flex items-center justify-between">
-          <h2 className="text-2xl font-bold">Browse Categories</h2>
-          <Button variant="ghost" className="text-blue-600" onClick={() => navigate('/customer/products')}>View All</Button>
+      <section className="px-1">
+        <div className="mb-8 flex items-end justify-between border-b border-border pb-6">
+          <div className="space-y-1">
+            <h2 className="text-2xl font-bold uppercase tracking-tight text-foreground">Categories</h2>
+            <p className="text-xs text-muted-foreground font-bold uppercase tracking-[0.2em] opacity-60">Technical Modules</p>
+          </div>
+          <Button variant="ghost" className="text-xs font-bold uppercase tracking-widest hover:bg-muted rounded-xl px-4 h-10" onClick={() => navigate('/customer/products')}>View All</Button>
         </div>
         
         {categoriesLoading ? (
-          <div className="flex h-32 items-center justify-center">
-             <Loader2 className="h-6 w-6 animate-spin text-primary" />
+          <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 md:grid-cols-6">
+             {[1,2,3,4,5,6].map(i => <div key={i} className="h-32 rounded-2xl bg-muted animate-pulse" />)}
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-6">
+          <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 md:grid-cols-6">
             {categories.map((cat) => (
-              <Card key={cat.id} className="group cursor-pointer transition-all hover:border-blue-500 hover:shadow-md">
-                <CardContent className="flex flex-col items-center justify-center p-6">
-                  <DynamicIcon name={cat.icon} className="mb-3 h-10 w-10 text-blue-600 group-hover:scale-110 transition-transform" />
-                  <span className="font-semibold">{cat.name}</span>
-                  <span className="text-xs text-muted-foreground">{cat.productCount} products</span>
+              <Card 
+                key={cat.id} 
+                className="group cursor-pointer border-none shadow-sm ring-1 ring-border bg-card transition-all hover:ring-black rounded-2xl overflow-hidden h-full" 
+                onClick={() => navigate(`/customer/products?category=${cat.name}`)}
+              >
+                <CardContent className="flex flex-col items-center justify-center p-8 h-full">
+                  <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-zinc-100 text-zinc-900 group-hover:bg-black group-hover:text-white transition-all duration-300">
+                    <DynamicIcon name={cat.icon || 'HelpCircle'} className="h-8 w-8" />
+                  </div>
+                  <span className="font-bold text-sm uppercase tracking-tight text-center text-foreground">{cat.name}</span>
                 </CardContent>
               </Card>
             ))}
@@ -84,103 +101,115 @@ export function HomePage() {
       </section>
 
       {/* Flash Sale */}
-      <section className="rounded-3xl bg-red-50 p-8 dark:bg-red-950/20">
-        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-red-500 text-white shadow-lg shadow-red-500/30">
+      <section className="rounded-[2.5rem] bg-zinc-100/70 p-10 md:p-14 overflow-hidden relative ring-1 ring-zinc-200">
+        <div className="absolute top-0 right-0 p-10 opacity-[0.03] pointer-events-none">
+           <Zap className="h-64 w-64 fill-black" />
+        </div>
+        <div className="relative z-10 mb-12 flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between px-2">
+          <div className="flex items-center gap-5">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-black text-white shadow-xl">
               <Zap className="h-6 w-6 fill-white" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold">Flash Sale</h2>
-              <p className="text-sm text-red-600 dark:text-red-400 font-medium">Ending in 02:45:12</p>
+              <h2 className="text-3xl font-bold uppercase tracking-tight text-black italic leading-none">Flash Sale</h2>
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-zinc-500 mt-1">Live deals active now</p>
             </div>
           </div>
-          <Button variant="outline" className="border-red-200 text-red-600 hover:bg-red-50 dark:border-red-900 dark:text-red-400">View All Deals</Button>
+          <Button variant="outline" className="border-zinc-300 bg-white text-black hover:bg-black hover:text-white rounded-xl font-bold uppercase tracking-widest text-xs h-11 px-8 shadow-sm transition-all">Participate</Button>
         </div>
         
         {productsLoading ? (
-           <div className="flex h-48 items-center justify-center">
-              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              {[1,2,3,4].map(i => <div key={i} className="h-64 rounded-2xl bg-zinc-200 animate-pulse" />)}
            </div>
         ) : (
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4 relative z-10 items-stretch">
             {flashSaleProducts.map((product) => (
-              <Card key={product.id} className="overflow-hidden border-none shadow-sm group cursor-pointer" onClick={() => navigate(`/customer/products/${product.id}`)}>
-                <div className="relative">
-                  <img src={product.image} alt={product.name} className="h-48 w-full object-cover transition-transform group-hover:scale-105" />
-                  <Badge className="absolute left-3 top-3 bg-red-500">-{Math.floor(Math.random() * 20) + 10}%</Badge>
+              <Card 
+                key={product.id} 
+                className="overflow-hidden border-none shadow-md group cursor-pointer bg-white transition-all hover:shadow-xl rounded-2xl ring-1 ring-black/5 flex flex-col h-full" 
+                onClick={() => navigate(`/customer/products/${product.id}`)}
+              >
+                <div className="relative aspect-[4/3] overflow-hidden">
+                  <img src={product.imageUrl || ''} alt={product.name} className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                  <div className="absolute left-4 top-4 bg-black text-white px-3 py-1 rounded-md font-black text-[10px] uppercase tracking-widest shadow-sm">SALE</div>
                 </div>
-                <CardContent className="p-4">
-                  <h3 className="mb-1 font-semibold truncate">{product.name}</h3>
-                  <div className="mb-3 flex items-center gap-2">
-                    <span className="text-lg font-bold text-red-600">${product.price - 100}</span>
-                    <span className="text-sm text-muted-foreground line-through">${product.price}</span>
+                <CardContent className="p-5 flex flex-col flex-1">
+                  <div className="flex flex-col flex-1">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-1.5">{product.brand}</p>
+                    <h3 className="mb-3 font-bold text-base line-clamp-2 text-black leading-tight min-h-[3rem]">{product.name}</h3>
                   </div>
-                  <Button variant="secondary" size="sm" className="w-full" onClick={(e) => { e.stopPropagation(); handleAddToCart(product.id); }}>
-                    Add to Cart
-                  </Button>
+                  <div className="flex items-center justify-between mt-auto pt-4 border-t border-zinc-50">
+                    <div className="flex flex-col">
+                      <span className="text-[10px] font-bold text-zinc-400 line-through">${product.price.toLocaleString()}</span>
+                      <span className="text-xl font-black text-black tracking-tighter leading-none">${(product.price * 0.8).toLocaleString()}</span>
+                    </div>
+                    <Button 
+                      size="icon" 
+                      className="h-10 w-10 rounded-xl bg-black text-white hover:opacity-90 transition-all flex-shrink-0"
+                      onClick={(e) => { e.stopPropagation(); handleAddToCart(product.id); }}
+                    >
+                      <Plus className="h-5 w-5" />
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             ))}
           </div>
         )}
-      </section>
-
-      {/* Promotional Banners */}
-      <section className="grid grid-cols-1 gap-6 md:grid-cols-2">
-        <div className="group relative overflow-hidden rounded-3xl bg-indigo-600 p-8 text-white">
-          <div className="relative z-10 max-w-[60%]">
-            <h3 className="mb-2 text-2xl font-bold">Gaming Zone</h3>
-            <p className="mb-6 text-indigo-100">Level up your setup with our latest gaming gear collection.</p>
-            <Button variant="secondary">Explore Now</Button>
-          </div>
-          <div className="absolute -bottom-10 -right-10 h-64 w-64 rounded-full bg-indigo-500/30 blur-3xl group-hover:bg-indigo-400/40 transition-colors" />
-          <TrendingUp className="absolute bottom-8 right-8 h-32 w-32 text-indigo-500/20" />
-        </div>
-        <div className="group relative overflow-hidden rounded-3xl bg-emerald-600 p-8 text-white">
-          <div className="relative z-10 max-w-[60%]">
-            <h3 className="mb-2 text-2xl font-bold">Eco Friendly</h3>
-            <p className="mb-6 text-emerald-100">Discover our sustainable technology and energy-efficient devices.</p>
-            <Button variant="secondary">Shop Green</Button>
-          </div>
-          <div className="absolute -bottom-10 -right-10 h-64 w-64 rounded-full bg-emerald-500/30 blur-3xl group-hover:bg-emerald-400/40 transition-colors" />
-          <ShieldCheck className="absolute bottom-8 right-8 h-32 w-32 text-emerald-500/20" />
-        </div>
       </section>
 
       {/* Featured Products */}
-      <section>
-        <div className="mb-8 flex items-center justify-between">
-          <h2 className="text-2xl font-bold">Featured Products</h2>
-          <Button variant="outline" onClick={() => navigate('/customer/products')}>Browse All</Button>
+      <section className="px-1">
+        <div className="mb-10 flex items-end justify-between border-b border-border pb-6">
+          <div className="space-y-1">
+            <h2 className="text-2xl font-bold uppercase tracking-tight text-foreground">Featured Products</h2>
+            <p className="text-xs text-muted-foreground font-bold uppercase tracking-[0.2em] opacity-60">Top tier performance</p>
+          </div>
+          <Button variant="ghost" className="text-xs font-bold uppercase tracking-widest rounded-xl px-4 h-10" onClick={() => navigate('/customer/products')}>See More</Button>
         </div>
         
         {productsLoading ? (
-           <div className="flex h-48 items-center justify-center">
-              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              {[1,2,3,4].map(i => <div key={i} className="h-64 rounded-2xl bg-muted animate-pulse" />)}
            </div>
         ) : (
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4 items-stretch">
             {featuredProducts.map((product) => (
-              <Card key={product.id} className="group overflow-hidden transition-all hover:shadow-lg cursor-pointer" onClick={() => navigate(`/customer/products/${product.id}`)}>
-                <div className="relative overflow-hidden">
-                  <img src={product.image} alt={product.name} className="h-56 w-full object-cover transition-transform group-hover:scale-105" />
-                  <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                    <Button size="icon" variant="secondary" className="rounded-full shadow-lg" onClick={(e) => { e.stopPropagation(); handleAddToCart(product.id); }}>
-                        <ShoppingCart className="h-4 w-4" />
-                    </Button>
+              <Card 
+                key={product.id} 
+                className="group overflow-hidden border-none shadow-sm ring-1 ring-border bg-card transition-all hover:shadow-md rounded-2xl cursor-pointer flex flex-col h-full" 
+                onClick={() => navigate(`/customer/products/${product.id}`)}
+              >
+                <div className="relative aspect-square overflow-hidden bg-zinc-50 border-b border-border/10">
+                  <img src={product.imageUrl || ''} alt={product.name} className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                  <div className="absolute right-3 top-3">
+                    <Badge className="bg-black text-white border-none font-bold text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-md">
+                      {product.categoryName}
+                    </Badge>
                   </div>
                 </div>
-                <CardContent className="p-4">
-                  <div className="mb-2 flex items-center justify-between">
-                    <span className="text-xs font-medium text-blue-600">{product.brand}</span>
-                    <div className="flex items-center gap-1">
-                      <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                      <span className="text-xs font-medium">{product.rating}</span>
+                <CardContent className="p-5 flex flex-col flex-1">
+                  <div className="flex flex-col flex-1">
+                    <div className="mb-2.5 flex items-center justify-between">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{product.brand}</p>
+                      <div className="flex items-center gap-1.5 bg-muted/50 px-2 py-0.5 rounded-full">
+                        <Star className="h-3.5 w-3.5 fill-black text-black" />
+                        <span className="text-xs font-bold text-foreground">{product.rating || 0}</span>
+                      </div>
                     </div>
+                    <h3 className="mb-4 text-base font-bold leading-tight line-clamp-2 text-foreground min-h-[3rem]">{product.name}</h3>
                   </div>
-                  <h3 className="mb-2 font-semibold">{product.name}</h3>
-                  <p className="mb-4 text-sm font-bold text-slate-900 dark:text-white">${product.price.toLocaleString()}</p>
+                  <div className="flex items-center justify-between mt-auto pt-4 border-t border-border/40">
+                    <span className="text-2xl font-black text-foreground tracking-tighter">${product.price.toLocaleString()}</span>
+                    <Button 
+                      size="icon" 
+                      className="h-10 w-10 rounded-xl bg-black text-white hover:opacity-90 transition-all flex-shrink-0"
+                      onClick={(e) => { e.stopPropagation(); handleAddToCart(product.id); }}
+                    >
+                      <Plus className="h-5 w-5" />
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             ))}
@@ -188,63 +217,47 @@ export function HomePage() {
         )}
       </section>
 
-      {/* Services/Why Us */}
-      <section className="grid grid-cols-1 gap-6 border-y border-border py-12 md:grid-cols-4">
-        <div className="flex items-center gap-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900/30">
-            <Truck className="h-6 w-6" />
+      {/* Services Section */}
+      <section className="grid grid-cols-2 gap-10 border-y border-border py-16 md:grid-cols-4 px-1">
+        {[
+          { icon: Truck, title: 'Rapid Logistics', desc: 'Global delivery' },
+          { icon: ShieldCheck, title: 'Secure Transit', desc: 'Encrypted protection' },
+          { icon: Headphones, title: 'Expert Support', desc: '24/7 assistance' },
+          { icon: Zap, title: 'Warranty Plus', desc: 'Lifetime protocol' }
+        ].map((service, idx) => (
+          <div key={idx} className="flex flex-col items-center text-center gap-4 group">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-zinc-100 text-zinc-900 group-hover:bg-black group-hover:text-white transition-all duration-300 shadow-sm">
+              <service.icon className="h-7 w-7" />
+            </div>
+            <div>
+              <h4 className="font-bold text-[13px] uppercase tracking-widest text-foreground">{service.title}</h4>
+              <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest mt-1.5 opacity-60">{service.desc}</p>
+            </div>
           </div>
-          <div>
-            <h4 className="font-bold">Free Shipping</h4>
-            <p className="text-xs text-muted-foreground">On all orders over $999</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-purple-100 text-purple-600 dark:bg-purple-900/30">
-            <ShieldCheck className="h-6 w-6" />
-          </div>
-          <div>
-            <h4 className="font-bold">Secure Payment</h4>
-            <p className="text-xs text-muted-foreground">100% secure transactions</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-orange-100 text-orange-600 dark:bg-orange-900/30">
-            <Headphones className="h-6 w-6" />
-          </div>
-          <div>
-            <h4 className="font-bold">24/7 Support</h4>
-            <p className="text-xs text-muted-foreground">Dedicated tech experts</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30">
-            <Zap className="h-6 w-6" />
-          </div>
-          <div>
-            <h4 className="font-bold">Warranty</h4>
-            <p className="text-xs text-muted-foreground">Genuine global warranty</p>
-          </div>
-        </div>
+        ))}
       </section>
 
       {/* Newsletter */}
-      <section className="rounded-3xl bg-slate-100 p-12 text-center dark:bg-slate-900">
-        <h2 className="mb-4 text-3xl font-bold">Join Our Newsletter</h2>
-        <p className="mb-8 text-muted-foreground">Subscribe to get special offers, free giveaways, and once-in-a-lifetime deals.</p>
-        <div className="mx-auto flex max-w-md gap-2">
-          <input 
-            type="email" 
-            placeholder="Enter your email" 
-            className="flex-1 rounded-xl border border-border bg-background px-4 py-2 outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          <Button>Subscribe</Button>
+      <section className="rounded-[3rem] bg-zinc-950 text-white p-16 text-center shadow-2xl relative overflow-hidden">
+        <div className="relative z-10 max-w-xl mx-auto space-y-8">
+          <div className="space-y-3">
+            <h2 className="text-4xl font-bold uppercase tracking-tight">Stay Synced</h2>
+            <p className="text-zinc-500 font-medium text-xs tracking-widest uppercase">Subscribe for elite technical access.</p>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
+            <input 
+              type="email" 
+              placeholder="EMAIL_PROTOCOL" 
+              className="flex-1 rounded-xl bg-white/5 border border-white/10 px-6 py-4 outline-none focus:ring-2 focus:ring-white/20 text-sm font-bold placeholder:text-zinc-700 uppercase tracking-widest"
+            />
+            <Button className="h-14 px-10 rounded-xl bg-white text-black hover:bg-zinc-200 font-bold uppercase tracking-widest text-xs">Connect</Button>
+          </div>
         </div>
       </section>
 
       {/* Footer simple */}
-      <footer className="pt-6 text-center text-sm text-muted-foreground">
-        <p>&copy; 2026 TechSales. All rights reserved.</p>
+      <footer className="pt-10 text-center">
+        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.4em] opacity-30">&copy; 2026 TECHSALES_PROTO. ALL RIGHTS RESERVED.</p>
       </footer>
     </div>
   );

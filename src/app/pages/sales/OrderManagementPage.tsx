@@ -21,18 +21,18 @@ export function OrderManagementPage() {
 
   const filteredOrders = orders.filter(order => {
     const matchesSearch = order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.customerName.toLowerCase().includes(searchTerm.toLowerCase());
+      (order.customerName || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
   const getStatusVariant = (status: string) => {
     switch (status) {
-      case 'delivered': return 'success';
-      case 'shipped': return 'info';
-      case 'processing': return 'warning';
-      case 'pending': return 'pending';
-      case 'cancelled': return 'danger';
+      case 'DELIVERED': return 'success';
+      case 'SHIPPING': return 'info';
+      case 'APPROVED': return 'warning';
+      case 'PENDING': return 'pending';
+      case 'CANCELLED': return 'danger';
       default: return 'default';
     }
   };
@@ -60,11 +60,11 @@ export function OrderManagementPage() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Statuses</SelectItem>
-            <SelectItem value="pending">Pending</SelectItem>
-            <SelectItem value="processing">Processing</SelectItem>
-            <SelectItem value="shipped">Shipped</SelectItem>
-            <SelectItem value="delivered">Delivered</SelectItem>
-            <SelectItem value="cancelled">Cancelled</SelectItem>
+            <SelectItem value="PENDING">Pending</SelectItem>
+            <SelectItem value="APPROVED">Approved</SelectItem>
+            <SelectItem value="SHIPPING">Shipped</SelectItem>
+            <SelectItem value="DELIVERED">Delivered</SelectItem>
+            <SelectItem value="CANCELLED">Cancelled</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -99,14 +99,14 @@ export function OrderManagementPage() {
                   <TableRow key={order.id}>
                     <TableCell className="font-medium">{order.id}</TableCell>
                     <TableCell>{order.customerName}</TableCell>
-                    <TableCell>{new Date(order.date).toLocaleDateString()}</TableCell>
-                    <TableCell>{order.items.length} items</TableCell>
+                    <TableCell>{new Date(order.createdAt).toLocaleDateString()}</TableCell>
+                    <TableCell>{order.items?.length || 0} items</TableCell>
                     <TableCell>
                       <Badge variant={getStatusVariant(order.status)}>
                         {order.status}
                       </Badge>
                     </TableCell>
-                    <TableCell className="font-semibold">${order.total.toLocaleString()}</TableCell>
+                    <TableCell className="font-semibold">${order.totalAmount.toLocaleString()}</TableCell>
                     <TableCell>
                       <Button variant="ghost" size="sm">
                         <Eye className="h-4 w-4" />

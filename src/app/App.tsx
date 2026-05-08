@@ -1,12 +1,20 @@
 import { Routes, Route, Navigate, useNavigate } from 'react-router';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LoginPage } from './pages/auth/LoginPage';
+import { SignUpPage } from './pages/auth/SignUpPage';
+import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage';
 import { DashboardLayout } from './components/layout/DashboardLayout';
 import { ProductCatalogPage } from './pages/customer/ProductCatalogPage';
 import { ProductDetailPage } from './pages/customer/ProductDetailPage';
 import { HomePage } from './pages/customer/HomePage';
 import { ShoppingCartPage } from './pages/customer/ShoppingCartPage';
 import { OrderHistoryPage } from './pages/customer/OrderHistoryPage';
+import { CheckoutPage } from './pages/customer/CheckoutPage';
+import { OrderSuccessPage } from './pages/customer/OrderSuccessPage';
+import { OrderDetailPage } from './pages/customer/OrderDetailPage';
+import { ProfilePage } from './pages/customer/ProfilePage';
+import { ChangePasswordPage } from './pages/customer/ChangePasswordPage';
+import { AddressBookPage } from './pages/customer/AddressBookPage';
 import { SalesDashboardPage } from './pages/sales/SalesDashboardPage';
 import { OrderManagementPage } from './pages/sales/OrderManagementPage';
 import { BusinessDashboardPage } from './pages/business/BusinessDashboardPage';
@@ -17,27 +25,47 @@ import { Button } from './components/ui/button';
 import { Toaster } from 'sonner';
 
 
+import { Loader2 } from 'lucide-react';
+
 function AppContent() {
-  const { user, logout } = useAuth();
+  const { user, isLoading, logout } = useAuth();
   const navigate = useNavigate();
 
+  if (isLoading) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-background">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   if (!user) {
-    return <LoginPage />;
+    return (
+      <Routes>
+        <Route path="/auth/login" element={<LoginPage />} />
+        <Route path="/auth/signup" element={<SignUpPage />} />
+        <Route path="/auth/forgot-password" element={<ForgotPasswordPage />} />
+        {/* Convenience Redirects */}
+        <Route path="/login" element={<Navigate to="/auth/login" replace />} />
+        <Route path="/signup" element={<Navigate to="/auth/signup" replace />} />
+        <Route path="*" element={<Navigate to="/auth/login" replace />} />
+      </Routes>
+    );
   }
 
   const roleBasedDefaultPath: Record<string, string> = {
-    customer: '/customer',
-    sales: '/sales',
-    business: '/business',
-    technical: '/technical',
+    Customer: '/customer',
+    Staff: '/sales',
+    BusinessAdmin: '/business',
+    TechnicalAdmin: '/technical',
   };
 
   const getRoleDisplayName = (role: string) => {
     const roleNames: Record<string, string> = {
-      customer: 'Customer',
-      sales: 'Sales Staff',
-      business: 'Business Admin',
-      technical: 'Technical Admin',
+      Customer: 'Customer',
+      Staff: 'Staff',
+      BusinessAdmin: 'Business Admin',
+      TechnicalAdmin: 'Technical Admin',
     };
     return roleNames[role] || role;
   };
@@ -53,19 +81,28 @@ function AppContent() {
         {/* Default Redirect */}
         <Route path="/" element={<Navigate to={roleBasedDefaultPath[user.role]} replace />} />
 
+        {/* Redirect auth pages to home if already logged in */}
+        <Route path="/auth/*" element={<Navigate to="/" replace />} />
+
         {/* Customer Routes */}
-        {user.role === 'customer' && (
+        {user.role === 'Customer' && (
           <>
             <Route path="/customer" element={<HomePage />} />
             <Route path="/customer/products" element={<ProductCatalogPage />} />
             <Route path="/customer/products/:id" element={<ProductDetailPage />} />
             <Route path="/customer/cart" element={<ShoppingCartPage />} />
+            <Route path="/customer/checkout" element={<CheckoutPage />} />
+            <Route path="/customer/order-success" element={<OrderSuccessPage />} />
             <Route path="/customer/orders" element={<OrderHistoryPage />} />
+            <Route path="/customer/orders/:id" element={<OrderDetailPage />} />
+            <Route path="/customer/profile" element={<ProfilePage />} />
+            <Route path="/customer/change-password" element={<ChangePasswordPage />} />
+            <Route path="/customer/addresses" element={<AddressBookPage />} />
           </>
         )}
 
         {/* Sales Routes */}
-        {user.role === 'sales' && (
+        {user.role === 'Staff' && (
           <>
             <Route path="/sales" element={<SalesDashboardPage />} />
             <Route path="/sales/orders" element={<OrderManagementPage />} />
@@ -73,7 +110,7 @@ function AppContent() {
         )}
 
         {/* Business Routes */}
-        {user.role === 'business' && (
+        {user.role === 'BusinessAdmin' && (
           <>
             <Route path="/business" element={<BusinessDashboardPage />} />
             <Route path="/business/products" element={<ProductManagementPage />} />
@@ -81,7 +118,7 @@ function AppContent() {
         )}
 
         {/* Technical Routes */}
-        {user.role === 'technical' && (
+        {user.role === 'TechnicalAdmin' && (
           <>
             <Route path="/technical" element={<TechnicalDashboardPage />} />
             <Route path="/technical/users" element={<UserManagementPage />} />

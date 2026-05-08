@@ -24,7 +24,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
             : item
         );
       }
-      return [...prev, { productId, quantity: 1 }];
+      return [...prev, { cartId: 'default-cart', productId, quantity: 1 }];
     });
   };
 

@@ -37,7 +37,7 @@ export function UserManagementPage() {
   };
 
   const filteredUsers = users.filter(user => {
-    const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    const matchesSearch = user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesRole = roleFilter === 'all' || user.role === roleFilter;
     return matchesSearch && matchesRole;
@@ -110,9 +110,9 @@ export function UserManagementPage() {
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold">
-                          {user.name.charAt(0)}
+                          {user.fullName.charAt(0)}
                         </div>
-                        <div className="font-medium">{user.name}</div>
+                        <div className="font-medium">{user.fullName}</div>
                       </div>
                     </TableCell>
                     <TableCell>{user.email}</TableCell>
@@ -122,11 +122,11 @@ export function UserManagementPage() {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={user.status === 'active' ? 'success' : 'secondary'}>
+                      <Badge variant={user.status === 'ACTIVE' ? 'success' : 'secondary'}>
                         {user.status}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{user.lastLogin}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{user.createdAt}</TableCell>
                     <TableCell>
                       <div className="flex gap-2">
                         <Button variant="ghost" size="sm">

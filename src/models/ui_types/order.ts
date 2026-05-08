@@ -1,16 +1,34 @@
-export interface Order {
-  id: string;
-  customerId: string;
-  customerName: string;
-  date: string;
-  status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
-  total: number;
-  items: OrderItem[];
+export enum OrderStatus {
+  PENDING = 'PENDING',
+  APPROVED = 'APPROVED',
+  SHIPPING = 'SHIPPING',
+  DELIVERED = 'DELIVERED',
+  CANCELLED = 'CANCELLED'
 }
 
 export interface OrderItem {
+  orderId: string;
   productId: string;
-  productName: string;
+  productName?: string; // UI convenience
+  imageUrl?: string; // UI convenience
+  price: number; // Snapshot price
   quantity: number;
-  price: number;
+}
+
+export interface Order {
+  id: string;
+  userId: string;
+  status: OrderStatus;
+  totalProductAmount: number;
+  shippingFee: number;
+  discountAmount: number;
+  totalAmount: number;
+  shippingAddressSnapshot: string;
+  createdAt: string;
+  updatedAt?: string;
+  
+  items?: OrderItem[];
+  customerName?: string; // UI convenience
+  paymentMethodId?: string; // Relation in DB
+  paymentMethodName?: string; // UI convenience
 }

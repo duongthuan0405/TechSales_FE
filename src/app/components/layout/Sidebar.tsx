@@ -10,12 +10,13 @@ import {
   FileText,
   UserCircle,
   Database,
-  Shield
+  Shield,
+  MapPin
 } from 'lucide-react';
 import { cn } from '../../utils/cn';
 
 interface SidebarProps {
-  role: 'customer' | 'sales' | 'business' | 'technical';
+  role: 'Customer' | 'Staff' | 'BusinessAdmin' | 'TechnicalAdmin';
 }
 
 interface NavItem {
@@ -25,21 +26,22 @@ interface NavItem {
 }
 
 const roleNavItems: Record<string, NavItem[]> = {
-  customer: [
+  Customer: [
     { icon: <LayoutDashboard className="h-5 w-5" />, label: 'Home', path: '/customer' },
     { icon: <Package className="h-5 w-5" />, label: 'Products', path: '/customer/products' },
     { icon: <ShoppingCart className="h-5 w-5" />, label: 'Cart', path: '/customer/cart' },
     { icon: <FileText className="h-5 w-5" />, label: 'Orders', path: '/customer/orders' },
+    { icon: <MapPin className="h-5 w-5" />, label: 'Addresses', path: '/customer/addresses' },
     { icon: <UserCircle className="h-5 w-5" />, label: 'Profile', path: '/customer/profile' },
   ],
-  sales: [
+  Staff: [
     { icon: <LayoutDashboard className="h-5 w-5" />, label: 'Dashboard', path: '/sales' },
     { icon: <ShoppingCart className="h-5 w-5" />, label: 'Orders', path: '/sales/orders' },
     { icon: <Users className="h-5 w-5" />, label: 'Customers', path: '/sales/customers' },
     { icon: <Package className="h-5 w-5" />, label: 'Products', path: '/sales/products' },
     { icon: <BarChart3 className="h-5 w-5" />, label: 'Analytics', path: '/sales/analytics' },
   ],
-  business: [
+  BusinessAdmin: [
     { icon: <LayoutDashboard className="h-5 w-5" />, label: 'Dashboard', path: '/business' },
     { icon: <BarChart3 className="h-5 w-5" />, label: 'Analytics', path: '/business/analytics' },
     { icon: <Package className="h-5 w-5" />, label: 'Products', path: '/business/products' },
@@ -48,7 +50,7 @@ const roleNavItems: Record<string, NavItem[]> = {
     { icon: <FileText className="h-5 w-5" />, label: 'Reports', path: '/business/reports' },
     { icon: <Settings className="h-5 w-5" />, label: 'Settings', path: '/business/settings' },
   ],
-  technical: [
+  TechnicalAdmin: [
     { icon: <LayoutDashboard className="h-5 w-5" />, label: 'Dashboard', path: '/technical' },
     { icon: <Users className="h-5 w-5" />, label: 'User Management', path: '/technical/users' },
     { icon: <Shield className="h-5 w-5" />, label: 'Roles & Permissions', path: '/technical/roles' },
