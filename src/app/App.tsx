@@ -15,8 +15,10 @@ import { OrderDetailPage } from './pages/customer/OrderDetailPage';
 import { ProfilePage } from './pages/customer/ProfilePage';
 import { ChangePasswordPage } from './pages/customer/ChangePasswordPage';
 import { AddressBookPage } from './pages/customer/AddressBookPage';
-import { SalesDashboardPage } from './pages/sales/SalesDashboardPage';
 import { OrderManagementPage } from './pages/sales/OrderManagementPage';
+import { OrderManagementDetailPage } from './pages/sales/OrderManagementDetailPage';
+import { ReviewManagementPage } from './pages/sales/ReviewManagementPage';
+import { StaffProductDetailPage } from './pages/sales/StaffProductDetailPage';
 import { BusinessDashboardPage } from './pages/business/BusinessDashboardPage';
 import { ProductManagementPage } from './pages/business/ProductManagementPage';
 import { TechnicalDashboardPage } from './pages/technical/TechnicalDashboardPage';
@@ -26,6 +28,7 @@ import { Toaster } from 'sonner';
 
 
 import { Loader2 } from 'lucide-react';
+import { SalesDashboardPage } from './pages/sales/salesdashboardpage';
 
 function AppContent() {
   const { user, isLoading, logout } = useAuth();
@@ -106,6 +109,10 @@ function AppContent() {
           <>
             <Route path="/sales" element={<SalesDashboardPage />} />
             <Route path="/sales/orders" element={<OrderManagementPage />} />
+            <Route path="/sales/orders/:id" element={<OrderManagementDetailPage />} />
+            <Route path="/sales/reviews" element={<ReviewManagementPage />} />
+            <Route path="/sales/products" element={<ProductManagementPage readOnly={true} />} />
+            <Route path="/sales/products/:id" element={<StaffProductDetailPage />} />
           </>
         )}
 

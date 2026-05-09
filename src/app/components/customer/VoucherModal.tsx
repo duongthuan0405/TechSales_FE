@@ -61,7 +61,7 @@ export function VoucherModal({ isOpen, onClose, onSelect, currentTotal }: Vouche
                   <div className="flex items-center justify-between pt-4 border-t border-border/50">
                     <div className="flex items-center gap-1.5 text-[9px] font-normal text-muted-foreground uppercase tracking-widest">
                       <Clock className="h-3 w-3" />
-                      Exp: {new Date(voucher.endDate).toLocaleDateString()}
+                      Exp: {new Date(voucher.endDate ?? new Date().toISOString()).toLocaleDateString()}
                     </div>
                     {isDisabled ? (
                       <span className="text-[9px] font-medium text-destructive uppercase tracking-widest">

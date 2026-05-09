@@ -2,7 +2,7 @@ export interface Category {
   id: string;
   name: string;
   parentId?: string;
-  createdAt: string;
+  createdAt?: string;
   
   // UI extended fields
   icon?: string; // We use Lucide icon names

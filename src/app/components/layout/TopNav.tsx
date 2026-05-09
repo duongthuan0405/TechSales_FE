@@ -1,6 +1,7 @@
-import { Bell, Search, User } from 'lucide-react';
-import { Button } from '../ui/Button';
-import { Input } from '../ui/Input';
+import { Search, User } from 'lucide-react';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import { NotificationDropdown } from './NotificationDropdown';
 
 interface TopNavProps {
   userName: string;
@@ -16,17 +17,14 @@ export function TopNav({ userName, userRole, onLogout }: TopNavProps) {
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             type="search"
-            placeholder="Search..."
-            className="pl-9"
+            placeholder="Search Protocol..."
+            className="pl-9 h-10 rounded-xl bg-muted/50 border-none focus-visible:ring-1 focus-visible:ring-primary/20 font-medium text-xs uppercase tracking-widest placeholder:text-muted-foreground/50"
           />
         </div>
       </div>
-      <div className="flex items-center gap-4">
-        <button className="relative rounded-lg p-2 hover:bg-accent">
-          <Bell className="h-5 w-5" />
-          <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-blue-500" />
-        </button>
-        <div className="flex items-center gap-3">
+      <div className="flex items-center gap-6">
+        <NotificationDropdown />
+        <div className="flex items-center gap-3 pl-4 border-l border-border/50">
           <div className="text-right">
             <div className="text-sm font-medium">{userName}</div>
             <div className="text-xs text-muted-foreground">{userRole}</div>

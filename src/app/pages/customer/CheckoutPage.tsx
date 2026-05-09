@@ -26,7 +26,7 @@ import { useGetAddresses } from '../../../dataHook/addressDataHook';
 import { useValidateVoucher } from '../../../dataHook/voucherDataHook';
 import { VoucherModal } from '../../components/customer/VoucherModal';
 import { Voucher, VoucherType } from '../../../models/ui_types/voucher';
-import { DynamicIcon } from '../../components/ui/DynamicIcon';
+import { DynamicIcon } from '../../components/ui/dynamicIcon';
 import { toast } from 'sonner';
 
 export function CheckoutPage() {

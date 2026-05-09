@@ -12,9 +12,10 @@ export interface Voucher {
   value: number; // Amount or percentage
   minOrderAmount?: number;
   maxDiscountAmount?: number;
-  startDate: string;
-  endDate: string;
+  startDate?: string;
+  endDate?: string;
   usageLimit?: number;
   usageCount: number;
   isActive: boolean;
+  createdAt?: string;
 }

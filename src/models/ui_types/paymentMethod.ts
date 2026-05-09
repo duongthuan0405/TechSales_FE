@@ -3,5 +3,5 @@ export interface PaymentMethod {
   name: string;
   description?: string;
   isActive: boolean;
-  createdAt: string;
+  createdAt?: string;
 }

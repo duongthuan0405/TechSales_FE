@@ -82,7 +82,7 @@ export function ProductDetailPage() {
             <h1 className="text-3xl font-bold tracking-tight text-foreground uppercase">{product.name}</h1>
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-1">
-                <Star className="h-3.5 w-3.5 fill-primary text-primary" />
+                <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
                 <span className="text-sm font-bold text-foreground">{product.rating || 0}</span>
               </div>
               <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{reviews.length} Verified Reviews</span>
@@ -192,7 +192,7 @@ export function ProductDetailPage() {
                 <div className="text-5xl font-bold text-foreground tracking-tighter">{product.rating || 0}</div>
                 <div className="flex justify-center gap-1">
                   {[1,2,3,4,5].map(i => (
-                    <Star key={i} className={`h-3.5 w-3.5 ${i <= (product.rating || 0) ? 'fill-primary text-primary' : 'text-muted'}`} />
+                    <Star key={i} className={`h-3.5 w-3.5 ${i <= (product.rating || 0) ? 'fill-yellow-400 text-yellow-400' : 'text-muted'}`} />
                   ))}
                 </div>
                 <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Global Score</p>
@@ -221,7 +221,7 @@ export function ProductDetailPage() {
                               <p className="font-bold text-sm uppercase tracking-tight">{rev.userName}</p>
                               <div className="flex gap-0.5">
                                 {[1,2,3,4,5].map(j => (
-                                  <Star key={j} className={`h-2.5 w-2.5 ${j <= rev.rating ? 'fill-primary text-primary' : 'text-muted'}`} />
+                                  <Star key={j} className={`h-2.5 w-2.5 ${j <= rev.rating ? 'fill-yellow-400 text-yellow-400' : 'text-muted'}`} />
                                 ))}
                               </div>
                             </div>
@@ -233,6 +233,30 @@ export function ProductDetailPage() {
                         <p className="text-sm text-muted-foreground leading-relaxed font-medium italic">
                           "{rev.comment}"
                         </p>
+
+                        {/* Multiple Responses */}
+                        {rev.responses && rev.responses.length > 0 ? (
+                          <div className="mt-4 space-y-3">
+                            {rev.responses.map((resp) => (
+                              <div key={resp.id} className="p-4 rounded-xl bg-muted/40 border-l-2 border-primary space-y-1">
+                                <div className="flex justify-between items-center">
+                                  <p className="text-[9px] font-bold uppercase tracking-widest text-primary">
+                                    {resp.userName || 'Official Response'}
+                                  </p>
+                                  <span className="text-[8px] text-muted-foreground uppercase font-medium">
+                                    {new Date(resp.createdAt).toLocaleDateString()}
+                                  </span>
+                                </div>
+                                <p className="text-xs text-foreground font-medium leading-relaxed italic">"{resp.content}"</p>
+                              </div>
+                            ))}
+                          </div>
+                        ) : rev.reply ? (
+                          <div className="mt-4 p-4 rounded-xl bg-muted/40 border-l-2 border-primary space-y-1">
+                            <p className="text-[9px] font-bold uppercase tracking-widest text-primary">Official Response</p>
+                            <p className="text-xs text-foreground font-medium leading-relaxed italic">"{rev.reply}"</p>
+                          </div>
+                        ) : null}
                       </div>
                     </div>
                   ))}

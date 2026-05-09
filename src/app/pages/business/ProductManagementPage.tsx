@@ -18,52 +18,157 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../../components/ui/select";
-import { Search, Edit, Trash2, Plus, Loader2 } from "lucide-react";
-import { useGetProducts } from "../../../dataHook/productDataHook";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "../../components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "../../components/ui/alert-dialog";
+import { Search, Edit, Trash2, Plus, Loader2, PackageSearch } from "lucide-react";
+import { 
+  useGetProducts, 
+  useCreateProduct, 
+  useUpdateProduct, 
+  useDeleteProduct 
+} from "../../../dataHook/productDataHook";
+import { useNavigate } from "react-router";
+import { Product, ProductStatus } from "../../../models/ui_types/product";
+import { ProductForm } from "../../components/business/ProductForm";
+import { toast } from "sonner";
 
-export function ProductManagementPage() {
+interface ProductManagementPageProps {
+  readOnly?: boolean;
+}
+
+export function ProductManagementPage({ readOnly = false }: ProductManagementPageProps) {
+  const navigate = useNavigate();
   const { data: products = [], isLoading } = useGetProducts();
+  const createMutation = useCreateProduct();
+  const updateMutation = useUpdateProduct();
+  const deleteMutation = useDeleteProduct();
+
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
+  
+  // Dialog states
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | undefined>(undefined);
+  const [deletingProductId, setDeletingProductId] = useState<string | null>(null);
 
   const categories = [
     "all",
-    ...Array.from(new Set(products.map((p) => p.category))),
+    ...Array.from(new Set(products.map((p) => p.categoryName))).filter(Boolean),
   ];
 
   const filteredProducts = products.filter((product) => {
     const matchesSearch =
       product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.brand.toLowerCase().includes(searchTerm.toLowerCase());
+      product.brand?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory =
-      categoryFilter === "all" || product.category === categoryFilter;
+      categoryFilter === "all" || product.categoryName === categoryFilter;
     return matchesSearch && matchesCategory;
   });
 
-  const getStockStatus = (stock: number) => {
-    if (stock === 0) return { variant: "danger", label: "Out of Stock" };
-    if (stock < 20) return { variant: "warning", label: "Low Stock" };
-    return { variant: "success", label: "In Stock" };
+  const mapStockToVariant = (stock: number): "success" | "warning" | "danger" | "default" => {
+    if (stock === 0) return "danger";
+    if (stock < 20) return "warning";
+    return "success";
+  };
+
+  const getStockLabel = (stock: number) => {
+    if (stock === 0) return "Out of Stock";
+    if (stock < 20) return "Low Stock";
+    return "In Stock";
+  };
+
+  const mapStatusToVariant = (status: ProductStatus): "success" | "secondary" | "outline" | "default" => {
+    switch (status) {
+      case ProductStatus.ACTIVE: return "success";
+      case ProductStatus.DISCONTINUED: return "secondary";
+      default: return "default";
+    }
+  };
+
+  const handleCreate = () => {
+    setEditingProduct(undefined);
+    setIsFormOpen(true);
+  };
+
+  const handleEdit = (product: Product) => {
+    setEditingProduct(product);
+    setIsFormOpen(true);
+  };
+
+  const handleDeleteClick = (id: string) => {
+    setDeletingProductId(id);
+  };
+
+  const onFormSubmit = (data: any) => {
+    if (editingProduct) {
+      updateMutation.mutate(
+        { id: editingProduct.id, data },
+        {
+          onSuccess: () => {
+            toast.success("Product updated successfully");
+            setIsFormOpen(false);
+          },
+          onError: () => toast.error("Failed to update product"),
+        }
+      );
+    } else {
+      createMutation.mutate(data, {
+        onSuccess: () => {
+          toast.success("Product created successfully");
+          setIsFormOpen(false);
+        },
+        onError: () => toast.error("Failed to create product"),
+      });
+    }
+  };
+
+  const confirmDelete = () => {
+    if (deletingProductId) {
+      deleteMutation.mutate(deletingProductId, {
+        onSuccess: () => {
+          toast.success("Product deleted successfully");
+          setDeletingProductId(null);
+        },
+        onError: () => toast.error("Failed to delete product"),
+      });
+    }
   };
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Product Management</h1>
-          <p className="text-muted-foreground">Manage your product catalog</p>
+          <h1 className="text-3xl font-bold tracking-tight">Product Management</h1>
+          <p className="text-muted-foreground">Manage your product catalog, inventory and status</p>
         </div>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Product
-        </Button>
+        {!readOnly && (
+          <Button onClick={handleCreate}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Product
+          </Button>
+        )}
       </div>
 
       <div className="flex flex-col gap-4 sm:flex-row">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Search products..."
+            placeholder="Search products by name or brand..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-9"
@@ -73,13 +178,13 @@ export function ProductManagementPage() {
           value={categoryFilter}
           onValueChange={setCategoryFilter}
         >
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Select Category" />
+          <SelectTrigger className="w-[200px]">
+            <SelectValue placeholder="All Categories" />
           </SelectTrigger>
           <SelectContent>
             {categories.map((cat) => (
-              <SelectItem key={cat} value={cat}>
-                {cat === "all" ? "All Categories" : cat}
+              <SelectItem key={cat as string} value={cat as string ?? ""}>
+                {cat === "all" ? "All Categories" : cat as string}
               </SelectItem>
             ))}
           </SelectContent>
@@ -90,68 +195,99 @@ export function ProductManagementPage() {
         <div className="flex h-64 items-center justify-center">
           <div className="flex flex-col items-center gap-2">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p className="text-muted-foreground">Loading products...</p>
+            <p className="text-muted-foreground font-medium">Loading catalog...</p>
           </div>
         </div>
+      ) : filteredProducts.length === 0 ? (
+        <Card className="flex h-64 flex-col items-center justify-center text-center">
+          <PackageSearch className="h-12 w-12 text-muted-foreground mb-4" />
+          <p className="text-xl font-semibold">No products found</p>
+          <p className="text-muted-foreground">Try adjusting your filters or search term</p>
+        </Card>
       ) : (
         <Card>
-          <CardHeader>
-            <CardTitle>Products ({filteredProducts.length})</CardTitle>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg font-medium">
+              Products List ({filteredProducts.length})
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Product</TableHead>
+                  <TableHead className="w-[300px]">Product</TableHead>
                   <TableHead>Category</TableHead>
                   <TableHead>Brand</TableHead>
                   <TableHead>Price</TableHead>
                   <TableHead>Stock</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Actions</TableHead>
+                  {!readOnly && <TableHead className="text-right">Actions</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredProducts.map((product) => {
-                  const stockStatus = getStockStatus(product.stock);
+                  const stockVariant = mapStockToVariant(product.stock);
                   return (
-                    <TableRow key={product.id}>
+                    <TableRow 
+                      key={product.id}
+                      className={readOnly ? "cursor-pointer hover:bg-muted/50 transition-colors" : ""}
+                      onClick={() => readOnly && navigate(`/sales/products/${product.id}`)}
+                    >
                       <TableCell>
                         <div className="flex items-center gap-3">
-                          <img
-                            src={product.image}
-                            alt={product.name}
-                            className="h-10 w-10 rounded object-cover"
-                          />
-                          <div>
-                            <div className="font-medium">{product.name}</div>
-                            <div className="text-xs text-muted-foreground">
+                          <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-md border bg-muted">
+                            <img
+                              src={product.imageUrl || "https://placehold.co/400x400?text=No+Image"}
+                              alt={product.name}
+                              className="h-full w-full object-cover"
+                            />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="font-semibold truncate">{product.name}</div>
+                            <div className="text-xs text-muted-foreground font-mono">
                               {product.id}
                             </div>
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell>{product.category}</TableCell>
+                      <TableCell>{product.categoryName}</TableCell>
                       <TableCell>{product.brand}</TableCell>
-                      <TableCell className="font-semibold">
+                      <TableCell className="font-bold">
                         ${product.price.toLocaleString()}
                       </TableCell>
-                      <TableCell>{product.stock}</TableCell>
                       <TableCell>
-                        <Badge variant={stockStatus.variant as any}>
-                          {stockStatus.label}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button variant="ghost" size="sm">
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm">
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
+                        <div className="flex flex-col gap-1">
+                          <span className="text-sm font-medium">{product.stock} units</span>
+                          <Badge variant={stockVariant as any} className="w-fit text-[10px] px-1.5 py-0">
+                            {getStockLabel(product.stock)}
+                          </Badge>
                         </div>
                       </TableCell>
+                      <TableCell>
+                        <Badge variant={mapStatusToVariant(product.status) as any}>
+                          {product.status}
+                        </Badge>
+                      </TableCell>
+                      {!readOnly && (
+                        <TableCell onClick={(e) => e.stopPropagation()} className="text-right">
+                          <div className="flex justify-end gap-1">
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
+                              onClick={() => handleEdit(product)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
+                              onClick={() => handleDeleteClick(product.id)}
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      )}
                     </TableRow>
                   );
                 })}
@@ -160,6 +296,48 @@ export function ProductManagementPage() {
           </CardContent>
         </Card>
       )}
+
+      {/* Form Dialog */}
+      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{editingProduct ? "Edit Product" : "Add New Product"}</DialogTitle>
+            <DialogDescription>
+              Fill in the details below to {editingProduct ? "update the" : "create a new"} product.
+            </DialogDescription>
+          </DialogHeader>
+          <ProductForm 
+            initialData={editingProduct} 
+            onSubmit={onFormSubmit}
+            isLoading={createMutation.isPending || updateMutation.isPending}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation */}
+      <AlertDialog 
+        open={!!deletingProductId} 
+        onOpenChange={(open) => !open && setDeletingProductId(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the product
+              and remove it from our catalog.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

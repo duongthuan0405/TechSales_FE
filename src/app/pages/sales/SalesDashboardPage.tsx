@@ -1,28 +1,40 @@
 import { useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { StatsCard } from '../../components/analytics/StatsCard';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table';
 import { Badge } from '../../components/ui/badge';
-import { DollarSign, ShoppingCart, TrendingUp, Users, Loader2 } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { 
+  ShoppingCart, 
+  Users, 
+  Loader2, 
+  Package, 
+  Truck, 
+  CheckCircle2, 
+  Clock,
+  MessageSquare,
+  TrendingUp
+} from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useGetSalesStats } from '../../../dataHook/dashboardDataHook';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router';
 
 export function SalesDashboardPage() {
+  const navigate = useNavigate();
   const { data: stats, isLoading, isError } = useGetSalesStats();
 
   useEffect(() => {
     if (isError) {
-      toast.error('Failed to load dashboard data');
+      toast.error('Failed to load operational protocols');
     }
   }, [isError]);
 
   const getStatusVariant = (status: string) => {
-    switch (status) {
-      case 'delivered': return 'success';
-      case 'shipped': return 'info';
-      case 'processing': return 'warning';
-      case 'pending': return 'pending';
+    switch (status.toUpperCase()) {
+      case 'DELIVERED': return 'success';
+      case 'SHIPPING': return 'info';
+      case 'APPROVED': return 'warning';
+      case 'PENDING': return 'pending';
+      case 'CANCELLED': return 'danger';
       default: return 'default';
     }
   };
@@ -32,100 +44,170 @@ export function SalesDashboardPage() {
       <div className="flex h-full items-center justify-center py-20">
         <div className="flex flex-col items-center gap-2">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-muted-foreground">Loading dashboard data...</p>
+          <p className="text-muted-foreground uppercase tracking-widest text-[10px] font-bold">Synchronizing Operational Data...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Sales Dashboard</h1>
-        <p className="text-muted-foreground">Overview of sales performance</p>
+    <div className="space-y-6 pb-12">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight uppercase">Operational Dashboard</h1>
+          <p className="text-sm text-muted-foreground font-bold uppercase tracking-widest opacity-60">Logistics & Service Performance</p>
+        </div>
+        <div className="flex items-center gap-2 rounded-full bg-blue-500/10 px-4 py-1.5 border border-blue-500/20 shadow-sm">
+          <span className="relative flex h-2 w-2">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-400 opacity-75"></span>
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-blue-500"></span>
+          </span>
+          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-600">
+            Active Session
+          </span>
+        </div>
       </div>
 
+      {/* Main Stats Grid - Operational Focused */}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
         <StatsCard
-          title="Total Revenue"
-          value={`$${stats.totalRevenue.toLocaleString()}`}
-          change="+12.5% from last month"
-          changeType="positive"
-          icon={DollarSign}
+          title="Pending Approval"
+          value={stats.pendingOrders}
+          change="Action required"
+          changeType={stats.pendingOrders > 5 ? "negative" : "positive"}
+          icon={Package}
         />
         <StatsCard
-          title="Total Orders"
-          value={stats.totalOrders}
-          change="+8.2% from last month"
-          changeType="positive"
-          icon={ShoppingCart}
+          title="In Transit"
+          value={stats.shippingOrders}
+          change="Real-time tracking"
+          changeType="neutral"
+          icon={Truck}
         />
         <StatsCard
-          title="Avg Order Value"
-          value={`$${stats.avgOrderValue.toFixed(0)}`}
-          change="+4.3% from last month"
+          title="Delivered Today"
+          value={stats.deliveredOrders}
+          change="+14.2% efficiency"
           changeType="positive"
-          icon={TrendingUp}
+          icon={CheckCircle2}
         />
         <StatsCard
-          title="Active Customers"
-          value={stats.activeCustomers.toLocaleString()}
-          change="+15.7% from last month"
+          title="Avg Processing"
+          value={stats.averageProcessingTime || "2.4h"}
+          change="-15m from yesterday"
           changeType="positive"
-          icon={Users}
+          icon={Clock}
         />
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Revenue Trend</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={stats.revenueTrend}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-              <XAxis dataKey="month" />
-              <YAxis />
-              <Tooltip />
-              <Line type="monotone" dataKey="revenue" stroke="#3b82f6" strokeWidth={2} />
-            </LineChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        {/* Order Volume Chart instead of Revenue */}
+        <Card className="lg:col-span-2 border-border shadow-sm rounded-2xl overflow-hidden bg-card">
+          <CardHeader className="border-b border-border bg-muted/20">
+            <CardTitle className="text-xs font-bold uppercase tracking-widest">Protocol Volume Trend</CardTitle>
+          </CardHeader>
+          <CardContent className="p-6">
+            <ResponsiveContainer width="100%" height={320}>
+              <BarChart data={stats.revenueTrend}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
+                <XAxis 
+                  dataKey="month" 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{ fontSize: 10, fontWeight: 700 }}
+                />
+                <YAxis 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{ fontSize: 10, fontWeight: 700 }}
+                />
+                <Tooltip 
+                  cursor={{ fill: 'rgba(0,0,0,0.05)' }}
+                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                />
+                <Bar 
+                  dataKey="orders" 
+                  fill="#000" 
+                  radius={[6, 6, 0, 0]}
+                  barSize={32}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Orders</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Order ID</TableHead>
-                <TableHead>Customer</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Total</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
+        {/* Quick Review Stats or Recent Orders */}
+        <Card className="border-border shadow-sm rounded-2xl overflow-hidden bg-card">
+          <CardHeader className="border-b border-border bg-muted/20 flex flex-row items-center justify-between">
+            <CardTitle className="text-xs font-bold uppercase tracking-widest">Operational Queue</CardTitle>
+            <button 
+              onClick={() => navigate('/sales/orders')}
+              className="text-[10px] font-bold uppercase tracking-widest text-primary hover:underline"
+            >
+              Management
+            </button>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="divide-y divide-border">
               {stats.recentOrders.map(order => (
-                <TableRow key={order.id}>
-                  <TableCell className="font-medium">{order.id}</TableCell>
-                  <TableCell>{order.customerName}</TableCell>
-                  <TableCell>{new Date(order.date).toLocaleDateString()}</TableCell>
-                  <TableCell>
-                    <Badge variant={getStatusVariant(order.status)}>
-                      {order.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="font-semibold">${order.total.toLocaleString()}</TableCell>
-                </TableRow>
+                <div key={order.id} className="flex items-center justify-between p-4 hover:bg-muted/30 transition-colors">
+                  <div className="space-y-1">
+                    <p className="text-xs font-bold uppercase tracking-tight">{order.id}</p>
+                    <p className="text-[10px] text-muted-foreground font-medium uppercase">{order.customerName}</p>
+                  </div>
+                  <Badge variant={getStatusVariant(order.status)} className="text-[9px] px-2 py-0.5 font-bold uppercase tracking-wider">
+                    {order.status}
+                  </Badge>
+                </div>
               ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+            </div>
+            {/* Added Quick Link to Reviews */}
+            <div className="p-4 bg-muted/20 border-t border-border">
+               <button 
+                onClick={() => navigate('/sales/reviews')}
+                className="w-full flex items-center justify-between bg-card p-3 rounded-xl ring-1 ring-border hover:ring-primary transition-all group"
+               >
+                 <div className="flex items-center gap-3">
+                    <MessageSquare className="h-4 w-4 text-primary" />
+                    <span className="text-[10px] font-bold uppercase tracking-widest">Review Moderation</span>
+                 </div>
+                 <Badge variant="pending" className="text-[9px]">4 Pending</Badge>
+               </button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Secondary Stats */}
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+          <Card className="border-border shadow-sm rounded-2xl bg-card p-6 flex items-center gap-5">
+              <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
+                  <Users className="h-6 w-6" />
+              </div>
+              <div>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Active Customers</p>
+                  <p className="text-2xl font-black">{stats.activeCustomers.toLocaleString()}</p>
+              </div>
+          </Card>
+          <Card className="border-border shadow-sm rounded-2xl bg-card p-6 flex items-center gap-5">
+              <div className="h-12 w-12 rounded-2xl bg-orange-500/10 flex items-center justify-center text-orange-500">
+                  <ShoppingCart className="h-6 w-6" />
+              </div>
+              <div>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Total Lifecycle Orders</p>
+                  <p className="text-2xl font-black">{stats.totalOrders}</p>
+              </div>
+          </Card>
+          <Card className="border-border shadow-sm rounded-2xl bg-card p-6 flex items-center gap-5">
+              <div className="h-12 w-12 rounded-2xl bg-purple-500/10 flex items-center justify-center text-purple-500">
+                  <TrendingUp className="h-6 w-6" />
+              </div>
+              <div>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Market Reach</p>
+                  <p className="text-2xl font-black">Global</p>
+              </div>
+          </Card>
+      </div>
     </div>
   );
 }

@@ -46,5 +46,22 @@ export const authService = {
   resetPassword: async (email: string): Promise<void> => {
     await delay(1200);
     console.log('Reset link sent to:', email);
+  },
+
+  confirmResetPassword: async (password: string, confirmPassword: string, token: string): Promise<void> => {
+    await delay(1500);
+    if (password !== confirmPassword) throw new Error('Passwords do not match');
+    console.log('Password reset successfully for token:', token);
+  },
+
+  verifyEmail: async (token: string): Promise<void> => {
+    await delay(1000);
+    console.log('Email verified successfully with token:', token);
+  },
+
+  changePassword: async (oldPassword: string, newPassword: string, confirmPassword: string): Promise<void> => {
+    await delay(1200);
+    if (newPassword !== confirmPassword) throw new Error('New passwords do not match');
+    console.log('Password changed successfully');
   }
 };
