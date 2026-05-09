@@ -33,7 +33,11 @@ import {
   AlertDialogTitle,
 } from "../../components/ui/alert-dialog";
 
-export function OrderManagementDetailPage() {
+interface OrderManagementDetailPageProps {
+  readOnly?: boolean;
+}
+
+export function OrderManagementDetailPage({ readOnly = false }: OrderManagementDetailPageProps) {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { data: order, isLoading } = useGetOrder(id || '');
@@ -206,47 +210,49 @@ export function OrderManagementDetailPage() {
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-8">
           {/* Action Controls */}
-          <Card className="border-primary/20 border shadow-lg bg-primary/[0.02] rounded-2xl overflow-hidden">
-            <CardHeader className="p-6 border-b border-primary/10">
-              <CardTitle className="text-xs font-bold uppercase tracking-widest text-primary">Protocol Management Actions</CardTitle>
-            </CardHeader>
-            <CardContent className="p-6">
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <Button 
-                  className="flex flex-col h-20 gap-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white disabled:bg-zinc-100 disabled:text-zinc-400 disabled:border-zinc-200 disabled:shadow-none"
-                  disabled={order.status !== OrderStatus.PENDING || isUpdating}
-                  onClick={() => setConfirmingStatus(OrderStatus.APPROVED)}
-                >
-                  <CheckCircle2 className="h-5 w-5" />
-                  <span className="text-[9px] font-bold uppercase tracking-widest">Approve</span>
-                </Button>
-                <Button 
-                  className="flex flex-col h-20 gap-2 rounded-xl bg-blue-500 hover:bg-blue-600 text-white disabled:bg-zinc-100 disabled:text-zinc-400 disabled:border-zinc-200 disabled:shadow-none"
-                  disabled={order.status !== OrderStatus.APPROVED || isUpdating}
-                  onClick={() => setConfirmingStatus(OrderStatus.SHIPPING)}
-                >
-                  <Truck className="h-5 w-5" />
-                  <span className="text-[9px] font-bold uppercase tracking-widest">Ship Order</span>
-                </Button>
-                <Button 
-                  className="flex flex-col h-20 gap-2 rounded-xl bg-green-500 hover:bg-green-600 text-white disabled:bg-zinc-100 disabled:text-zinc-400 disabled:border-zinc-200 disabled:shadow-none"
-                  disabled={order.status !== OrderStatus.SHIPPING || isUpdating}
-                  onClick={() => setConfirmingStatus(OrderStatus.DELIVERED)}
-                >
-                  <Package className="h-5 w-5" />
-                  <span className="text-[9px] font-bold uppercase tracking-widest">Deliver</span>
-                </Button>
-                <Button 
-                  className="flex flex-col h-20 gap-2 rounded-xl bg-destructive hover:bg-destructive/90 text-white disabled:bg-zinc-100 disabled:text-zinc-400 disabled:border-zinc-200 disabled:shadow-none"
-                  disabled={(order.status === OrderStatus.DELIVERED || order.status === OrderStatus.CANCELLED) || isUpdating}
-                  onClick={() => setConfirmingStatus(OrderStatus.CANCELLED)}
-                >
-                  <XCircle className="h-5 w-5" />
-                  <span className="text-[9px] font-bold uppercase tracking-widest">Void Protocol</span>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          {!readOnly && (
+            <Card className="border-primary/20 border shadow-lg bg-primary/[0.02] rounded-2xl overflow-hidden">
+              <CardHeader className="p-6 border-b border-primary/10">
+                <CardTitle className="text-xs font-bold uppercase tracking-widest text-primary">Protocol Management Actions</CardTitle>
+              </CardHeader>
+              <CardContent className="p-6">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  <Button 
+                    className="flex flex-col h-20 gap-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white disabled:bg-zinc-100 disabled:text-zinc-400 disabled:border-zinc-200 disabled:shadow-none"
+                    disabled={order.status !== OrderStatus.PENDING || isUpdating}
+                    onClick={() => setConfirmingStatus(OrderStatus.APPROVED)}
+                  >
+                    <CheckCircle2 className="h-5 w-5" />
+                    <span className="text-[9px] font-bold uppercase tracking-widest">Approve</span>
+                  </Button>
+                  <Button 
+                    className="flex flex-col h-20 gap-2 rounded-xl bg-blue-500 hover:bg-blue-600 text-white disabled:bg-zinc-100 disabled:text-zinc-400 disabled:border-zinc-200 disabled:shadow-none"
+                    disabled={order.status !== OrderStatus.APPROVED || isUpdating}
+                    onClick={() => setConfirmingStatus(OrderStatus.SHIPPING)}
+                  >
+                    <Truck className="h-5 w-5" />
+                    <span className="text-[9px] font-bold uppercase tracking-widest">Ship Order</span>
+                  </Button>
+                  <Button 
+                    className="flex flex-col h-20 gap-2 rounded-xl bg-green-500 hover:bg-green-600 text-white disabled:bg-zinc-100 disabled:text-zinc-400 disabled:border-zinc-200 disabled:shadow-none"
+                    disabled={order.status !== OrderStatus.SHIPPING || isUpdating}
+                    onClick={() => setConfirmingStatus(OrderStatus.DELIVERED)}
+                  >
+                    <Package className="h-5 w-5" />
+                    <span className="text-[9px] font-bold uppercase tracking-widest">Deliver</span>
+                  </Button>
+                  <Button 
+                    className="flex flex-col h-20 gap-2 rounded-xl bg-destructive hover:bg-destructive/90 text-white disabled:bg-zinc-100 disabled:text-zinc-400 disabled:border-zinc-200 disabled:shadow-none"
+                    disabled={(order.status === OrderStatus.DELIVERED || order.status === OrderStatus.CANCELLED) || isUpdating}
+                    onClick={() => setConfirmingStatus(OrderStatus.CANCELLED)}
+                  >
+                    <XCircle className="h-5 w-5" />
+                    <span className="text-[9px] font-bold uppercase tracking-widest">Void Protocol</span>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           <Card className="border-border shadow-sm bg-card rounded-2xl overflow-hidden">
             <CardHeader className="p-6 pb-0">

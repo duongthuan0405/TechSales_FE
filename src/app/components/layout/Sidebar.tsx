@@ -12,7 +12,8 @@ import {
   Database,
   Shield,
   MapPin,
-  MessageSquare
+  MessageSquare,
+  FolderTree
 } from 'lucide-react';
 import { cn } from '../../utils/cn';
 
@@ -44,12 +45,12 @@ const roleNavItems: Record<string, NavItem[]> = {
   ],
   BusinessAdmin: [
     { icon: <LayoutDashboard className="h-5 w-5" />, label: 'Dashboard', path: '/business' },
-    { icon: <BarChart3 className="h-5 w-5" />, label: 'Analytics', path: '/business/analytics' },
     { icon: <Package className="h-5 w-5" />, label: 'Products', path: '/business/products' },
-    { icon: <ShoppingCart className="h-5 w-5" />, label: 'Orders', path: '/business/orders' },
+    { icon: <FolderTree className="h-5 w-5" />, label: 'Categories', path: '/business/categories' },
     { icon: <Users className="h-5 w-5" />, label: 'Customers', path: '/business/customers' },
+    { icon: <UserCircle className="h-5 w-5" />, label: 'Staff Management', path: '/business/staff' },
     { icon: <FileText className="h-5 w-5" />, label: 'Reports', path: '/business/reports' },
-    { icon: <Settings className="h-5 w-5" />, label: 'Settings', path: '/business/settings' },
+    { icon: <UserCircle className="h-5 w-5" />, label: 'Profile', path: '/business/profile' },
   ],
   TechnicalAdmin: [
     { icon: <LayoutDashboard className="h-5 w-5" />, label: 'Dashboard', path: '/technical' },

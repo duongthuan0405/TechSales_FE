@@ -1,5 +1,5 @@
 import { products } from '../data/mockData';
-import { Product } from '../models/ui_types/product';
+import { Product, ProductStatus } from '../models/ui_types/product';
 import { delay } from '../app/utils/delay';
 
 export interface ProductQueryParams {
@@ -113,5 +113,18 @@ export const productService = {
     const index = products.findIndex(p => p.id === id);
     if (index === -1) throw new Error('Product not found');
     products.splice(index, 1);
+  },
+
+  toggleProductDiscontinue: async (id: string): Promise<Product> => {
+    await delay(1000);
+    const index = products.findIndex(p => p.id === id);
+    if (index === -1) throw new Error('Product not found');
+    
+    products[index].status = products[index].status === ProductStatus.DISCONTINUED 
+      ? ProductStatus.ACTIVE 
+      : ProductStatus.DISCONTINUED;
+      
+    products[index].updatedAt = new Date().toISOString();
+    return { ...products[index] };
   }
 };

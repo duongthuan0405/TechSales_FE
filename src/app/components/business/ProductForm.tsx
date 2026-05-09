@@ -22,15 +22,15 @@ import {
 import { Product, ProductStatus } from "../../../models/ui_types/product";
 import { Loader2 } from "lucide-react";
 
-// Định nghĩa schema với kiểu số rõ ràng
+// Schema definition with clear numeric types and English messages
 const productSchema = z.object({
-  name: z.string().min(2, "Tên sản phẩm phải có ít nhất 2 ký tự"),
-  description: z.string().min(5, "Mô tả phải có ít nhất 5 ký tự"),
-  price: z.number().min(0, "Giá phải lớn hơn hoặc bằng 0"),
-  stock: z.number().int().min(0, "Số lượng tồn kho không được âm"),
+  name: z.string().min(2, "Product name must be at least 2 characters"),
+  description: z.string().min(5, "Description must be at least 5 characters"),
+  price: z.number().min(0, "Price must be greater than or equal to 0"),
+  stock: z.number().int().min(0, "Stock quantity cannot be negative"),
   status: z.nativeEnum(ProductStatus),
-  categoryName: z.string().min(1, "Danh mục không được để trống"),
-  brand: z.string().min(1, "Thương hiệu không được để trống"),
+  categoryName: z.string().min(1, "Category is required"),
+  brand: z.string().min(1, "Brand is required"),
   imageUrl: z.string().optional(),
 });
 
@@ -65,9 +65,9 @@ export function ProductForm({ initialData, onSubmit, isLoading }: ProductFormPro
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Tên sản phẩm</FormLabel>
+              <FormLabel>Product Name</FormLabel>
               <FormControl>
-                <Input placeholder="Ví dụ: iPhone 15 Pro" {...field} />
+                <Input placeholder="e.g., iPhone 15 Pro" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -80,9 +80,9 @@ export function ProductForm({ initialData, onSubmit, isLoading }: ProductFormPro
             name="categoryName"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Danh mục</FormLabel>
+                <FormLabel>Category</FormLabel>
                 <FormControl>
-                  <Input placeholder="Ví dụ: Điện thoại" {...field} />
+                  <Input placeholder="e.g., Electronics" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -93,9 +93,9 @@ export function ProductForm({ initialData, onSubmit, isLoading }: ProductFormPro
             name="brand"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Thương hiệu</FormLabel>
+                <FormLabel>Brand</FormLabel>
                 <FormControl>
-                  <Input placeholder="Ví dụ: Apple" {...field} />
+                  <Input placeholder="e.g., Apple" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -109,7 +109,7 @@ export function ProductForm({ initialData, onSubmit, isLoading }: ProductFormPro
             name="price"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Giá ($)</FormLabel>
+                <FormLabel>Price ($)</FormLabel>
                 <FormControl>
                   <Input 
                     type="number" 
@@ -126,7 +126,7 @@ export function ProductForm({ initialData, onSubmit, isLoading }: ProductFormPro
             name="stock"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Số lượng tồn</FormLabel>
+                <FormLabel>Stock Quantity</FormLabel>
                 <FormControl>
                   <Input 
                     type="number" 
@@ -145,11 +145,11 @@ export function ProductForm({ initialData, onSubmit, isLoading }: ProductFormPro
           name="status"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Trạng thái</FormLabel>
+              <FormLabel>Status</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Chọn trạng thái" />
+                    <SelectValue placeholder="Select status" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
@@ -167,10 +167,10 @@ export function ProductForm({ initialData, onSubmit, isLoading }: ProductFormPro
           name="description"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Mô tả</FormLabel>
+              <FormLabel>Description</FormLabel>
               <FormControl>
                 <Textarea 
-                  placeholder="Nhập mô tả sản phẩm..." 
+                  placeholder="Enter product description..." 
                   className="min-h-[100px]" 
                   {...field} 
                 />
@@ -185,7 +185,7 @@ export function ProductForm({ initialData, onSubmit, isLoading }: ProductFormPro
           name="imageUrl"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>URL Hình ảnh</FormLabel>
+              <FormLabel>Image URL</FormLabel>
               <FormControl>
                 <Input placeholder="https://example.com/image.jpg" {...field} />
               </FormControl>
@@ -197,7 +197,7 @@ export function ProductForm({ initialData, onSubmit, isLoading }: ProductFormPro
         <div className="flex justify-end gap-2 pt-4">
           <Button type="submit" disabled={isLoading} className="min-w-[120px]">
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {initialData ? "Cập nhật" : "Tạo mới"}
+            {initialData ? "Update Product" : "Create Product"}
           </Button>
         </div>
       </form>
