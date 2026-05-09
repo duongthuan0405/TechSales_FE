@@ -433,11 +433,11 @@ export const mockNotifications: Notification[] = [
     id: 'n1',
     userId: 'u4',
     title: 'Order Protocol Initialized',
-    message: 'Your order #ORD1234 has been successfully placed in the shipping queue.',
+    message: 'Your order #ORD-001 has been successfully placed in the shipping queue.',
     type: 'order',
     isRead: false,
     createdAt: new Date(Date.now() - 3600000).toISOString(),
-    link: '/customer/orders/ORD1234'
+    link: '/customer/orders/ORD-001'
   },
   {
     id: 'n2',

@@ -11,7 +11,8 @@ import {
   UserCircle,
   Database,
   Shield,
-  MapPin
+  MapPin,
+  MessageSquare
 } from 'lucide-react';
 import { cn } from '../../utils/cn';
 
@@ -37,9 +38,9 @@ const roleNavItems: Record<string, NavItem[]> = {
   Staff: [
     { icon: <LayoutDashboard className="h-5 w-5" />, label: 'Dashboard', path: '/sales' },
     { icon: <ShoppingCart className="h-5 w-5" />, label: 'Orders', path: '/sales/orders' },
-    { icon: <Users className="h-5 w-5" />, label: 'Customers', path: '/sales/customers' },
+    { icon: <MessageSquare className="h-5 w-5" />, label: 'Reviews', path: '/sales/reviews' },
     { icon: <Package className="h-5 w-5" />, label: 'Products', path: '/sales/products' },
-    { icon: <BarChart3 className="h-5 w-5" />, label: 'Analytics', path: '/sales/analytics' },
+    { icon: <Users className="h-5 w-5" />, label: 'Customers', path: '/sales/customers' },
   ],
   BusinessAdmin: [
     { icon: <LayoutDashboard className="h-5 w-5" />, label: 'Dashboard', path: '/business' },

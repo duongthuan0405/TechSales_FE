@@ -1,6 +1,6 @@
 import { Search, User } from 'lucide-react';
 import { Button } from '../ui/button';
-import { Input } from '../ui/Input';
+import { Input } from '../ui/input';
 import { NotificationDropdown } from './NotificationDropdown';
 
 interface TopNavProps {

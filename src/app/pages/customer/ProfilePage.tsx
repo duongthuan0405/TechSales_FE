@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
-import { Input } from '../../components/ui/Input';
+import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { useAuth } from '../../context/AuthContext';
 import { User, Mail, Phone, Camera, Save, Loader2, ShieldCheck } from 'lucide-react';

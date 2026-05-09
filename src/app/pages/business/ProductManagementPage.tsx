@@ -10,7 +10,7 @@ import {
 } from "../../components/ui/table";
 import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/button";
-import { Input } from "../../components/ui/Input";
+import { Input } from "../../components/ui/input";
 import {
   Select,
   SelectContent,
@@ -18,10 +18,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../../components/ui/select";
-import { Search, Edit, Trash2, Plus, Loader2 } from "lucide-react";
+import { Search, Edit, Trash2, Plus, Loader2, Eye } from "lucide-react";
 import { useGetProducts } from "../../../dataHook/productDataHook";
+import { useNavigate } from "react-router";
 
-export function ProductManagementPage() {
+interface ProductManagementPageProps {
+  readOnly?: boolean;
+}
+
+export function ProductManagementPage({ readOnly = false }: ProductManagementPageProps) {
+  const navigate = useNavigate();
   const { data: products = [], isLoading } = useGetProducts();
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
@@ -53,10 +59,12 @@ export function ProductManagementPage() {
           <h1 className="text-3xl font-bold">Product Management</h1>
           <p className="text-muted-foreground">Manage your product catalog</p>
         </div>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Product
-        </Button>
+        {!readOnly && (
+          <Button>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Product
+          </Button>
+        )}
       </div>
 
       <div className="flex flex-col gap-4 sm:flex-row">
@@ -108,14 +116,18 @@ export function ProductManagementPage() {
                   <TableHead>Price</TableHead>
                   <TableHead>Stock</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Actions</TableHead>
+                  {!readOnly && <TableHead>Actions</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredProducts.map((product) => {
                   const stockStatus = getStockStatus(product.stock);
                   return (
-                    <TableRow key={product.id}>
+                    <TableRow 
+                      key={product.id}
+                      className={readOnly ? "cursor-pointer hover:bg-muted/50 transition-colors" : ""}
+                      onClick={() => readOnly && navigate(`/sales/products/${product.id}`)}
+                    >
                       <TableCell>
                         <div className="flex items-center gap-3">
                           <img
@@ -142,16 +154,18 @@ export function ProductManagementPage() {
                           {stockStatus.label}
                         </Badge>
                       </TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button variant="ghost" size="sm">
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm">
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </div>
-                      </TableCell>
+                      {!readOnly && (
+                        <TableCell onClick={(e) => e.stopPropagation()}>
+                          <div className="flex gap-2">
+                            <Button variant="ghost" size="sm">
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="sm">
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      )}
                     </TableRow>
                   );
                 })}

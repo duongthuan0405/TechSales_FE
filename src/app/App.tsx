@@ -16,6 +16,9 @@ import { ProfilePage } from './pages/customer/ProfilePage';
 import { ChangePasswordPage } from './pages/customer/ChangePasswordPage';
 import { AddressBookPage } from './pages/customer/AddressBookPage';
 import { OrderManagementPage } from './pages/sales/OrderManagementPage';
+import { OrderManagementDetailPage } from './pages/sales/OrderManagementDetailPage';
+import { ReviewManagementPage } from './pages/sales/ReviewManagementPage';
+import { StaffProductDetailPage } from './pages/sales/StaffProductDetailPage';
 import { BusinessDashboardPage } from './pages/business/BusinessDashboardPage';
 import { ProductManagementPage } from './pages/business/ProductManagementPage';
 import { TechnicalDashboardPage } from './pages/technical/TechnicalDashboardPage';
@@ -106,6 +109,10 @@ function AppContent() {
           <>
             <Route path="/sales" element={<SalesDashboardPage />} />
             <Route path="/sales/orders" element={<OrderManagementPage />} />
+            <Route path="/sales/orders/:id" element={<OrderManagementDetailPage />} />
+            <Route path="/sales/reviews" element={<ReviewManagementPage />} />
+            <Route path="/sales/products" element={<ProductManagementPage readOnly={true} />} />
+            <Route path="/sales/products/:id" element={<StaffProductDetailPage />} />
           </>
         )}
 
