@@ -82,5 +82,36 @@ export const productService = {
     await delay(300);
     const brands = products.map(p => p.brand).filter((b): b is string => !!b);
     return Array.from(new Set(brands));
+  },
+
+  createProduct: async (product: Omit<Product, 'id' | 'createdAt'>): Promise<Product> => {
+    await delay(1000);
+    const newProduct: Product = {
+      ...product,
+      id: `P${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`,
+      createdAt: new Date().toISOString(),
+    };
+    products.unshift(newProduct);
+    return newProduct;
+  },
+
+  updateProduct: async (id: string, productData: Partial<Product>): Promise<Product> => {
+    await delay(1000);
+    const index = products.findIndex(p => p.id === id);
+    if (index === -1) throw new Error('Product not found');
+    
+    products[index] = {
+      ...products[index],
+      ...productData,
+      updatedAt: new Date().toISOString(),
+    };
+    return products[index];
+  },
+
+  deleteProduct: async (id: string): Promise<void> => {
+    await delay(800);
+    const index = products.findIndex(p => p.id === id);
+    if (index === -1) throw new Error('Product not found');
+    products.splice(index, 1);
   }
 };
