@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/Card";
+import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
 import {
   Table,
   TableBody,
@@ -7,21 +7,22 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "../../components/ui/Table";
-import { Badge } from "../../components/ui/Badge";
-import { Button } from "../../components/ui/Button";
-import { Input } from "../../components/ui/Input";
+} from "../../components/ui/table";
+import { Badge } from "../../components/ui/badge";
+import { Button } from "../../components/ui/button";
+import { Input } from "../../components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../../components/ui/Select";
-import { products } from "../../data/mockData";
-import { Search, Edit, Trash2, Plus } from "lucide-react";
+} from "../../components/ui/select";
+import { Search, Edit, Trash2, Plus, Loader2 } from "lucide-react";
+import { useGetProducts } from "../../../dataHook/productDataHook";
 
 export function ProductManagementPage() {
+  const { data: products = [], isLoading } = useGetProducts();
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
 
@@ -85,71 +86,80 @@ export function ProductManagementPage() {
         </Select>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Products ({filteredProducts.length})</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Product</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Brand</TableHead>
-                <TableHead>Price</TableHead>
-                <TableHead>Stock</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredProducts.map((product) => {
-                const stockStatus = getStockStatus(product.stock);
-                return (
-                  <TableRow key={product.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <img
-                          src={product.image}
-                          alt={product.name}
-                          className="h-10 w-10 rounded object-cover"
-                        />
-                        <div>
-                          <div className="font-medium">{product.name}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {product.id}
+      {isLoading ? (
+        <div className="flex h-64 items-center justify-center">
+          <div className="flex flex-col items-center gap-2">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-muted-foreground">Loading products...</p>
+          </div>
+        </div>
+      ) : (
+        <Card>
+          <CardHeader>
+            <CardTitle>Products ({filteredProducts.length})</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Product</TableHead>
+                  <TableHead>Category</TableHead>
+                  <TableHead>Brand</TableHead>
+                  <TableHead>Price</TableHead>
+                  <TableHead>Stock</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredProducts.map((product) => {
+                  const stockStatus = getStockStatus(product.stock);
+                  return (
+                    <TableRow key={product.id}>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <img
+                            src={product.image}
+                            alt={product.name}
+                            className="h-10 w-10 rounded object-cover"
+                          />
+                          <div>
+                            <div className="font-medium">{product.name}</div>
+                            <div className="text-xs text-muted-foreground">
+                              {product.id}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>{product.category}</TableCell>
-                    <TableCell>{product.brand}</TableCell>
-                    <TableCell className="font-semibold">
-                      ${product.price.toLocaleString()}
-                    </TableCell>
-                    <TableCell>{product.stock}</TableCell>
-                    <TableCell>
-                      <Badge variant={stockStatus.variant as any}>
-                        {stockStatus.label}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <Button variant="ghost" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm">
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+                      </TableCell>
+                      <TableCell>{product.category}</TableCell>
+                      <TableCell>{product.brand}</TableCell>
+                      <TableCell className="font-semibold">
+                        ${product.price.toLocaleString()}
+                      </TableCell>
+                      <TableCell>{product.stock}</TableCell>
+                      <TableCell>
+                        <Badge variant={stockStatus.variant as any}>
+                          {stockStatus.label}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          <Button variant="ghost" size="sm">
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="sm">
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
