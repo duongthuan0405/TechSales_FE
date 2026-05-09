@@ -44,3 +44,14 @@ export const useCancelOrder = () => {
     },
   });
 };
+export const useUpdateOrderStatus = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, status }: { id: string, status: any }) => 
+      orderService.updateOrderStatus(id, status),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['orders', variables.id] });
+    },
+  });
+};

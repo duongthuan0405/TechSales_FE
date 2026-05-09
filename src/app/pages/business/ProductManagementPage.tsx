@@ -10,7 +10,7 @@ import {
 } from "../../components/ui/table";
 import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/button";
-import { Input } from "../../components/ui/input";
+import { Input } from "../../components/ui/Input";
 import {
   Select,
   SelectContent,
@@ -28,15 +28,15 @@ export function ProductManagementPage() {
 
   const categories = [
     "all",
-    ...Array.from(new Set(products.map((p) => p.category))),
+    ...Array.from(new Set(products.map((p) => p.categoryName))),
   ];
 
   const filteredProducts = products.filter((product) => {
     const matchesSearch =
       product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.brand.toLowerCase().includes(searchTerm.toLowerCase());
+      product.brand?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory =
-      categoryFilter === "all" || product.category === categoryFilter;
+      categoryFilter === "all" || product.categoryName === categoryFilter;
     return matchesSearch && matchesCategory;
   });
 
@@ -78,7 +78,7 @@ export function ProductManagementPage() {
           </SelectTrigger>
           <SelectContent>
             {categories.map((cat) => (
-              <SelectItem key={cat} value={cat}>
+              <SelectItem key={cat} value={cat ?? ""}>
                 {cat === "all" ? "All Categories" : cat}
               </SelectItem>
             ))}
@@ -119,7 +119,7 @@ export function ProductManagementPage() {
                       <TableCell>
                         <div className="flex items-center gap-3">
                           <img
-                            src={product.image}
+                            src={product.imageUrl}
                             alt={product.name}
                             className="h-10 w-10 rounded object-cover"
                           />
@@ -131,7 +131,7 @@ export function ProductManagementPage() {
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell>{product.category}</TableCell>
+                      <TableCell>{product.categoryName}</TableCell>
                       <TableCell>{product.brand}</TableCell>
                       <TableCell className="font-semibold">
                         ${product.price.toLocaleString()}

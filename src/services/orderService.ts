@@ -1,6 +1,6 @@
 import { orders, products } from '../data/mockData';
 import { Order, OrderStatus } from '../models/ui_types/order';
-import { delay } from '../app/utils/delay';
+import { delay } from '../utils/delay';
 
 export interface CheckoutPreviewParams {
   items: { productId: string; quantity: number }[];
@@ -71,5 +71,12 @@ export const orderService = {
       throw new Error('Only pending orders can be cancelled');
     }
     order.status = OrderStatus.CANCELLED;
+  },
+
+  updateOrderStatus: async (id: string, status: OrderStatus): Promise<void> => {
+    await delay(1000);
+    const order = orders.find(o => o.id === id);
+    if (!order) throw new Error('Order not found');
+    order.status = status;
   }
 };

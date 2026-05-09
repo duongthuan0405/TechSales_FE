@@ -19,4 +19,10 @@ export interface DashboardStats {
   revenueTrend: SalesData[];
   categoryDistribution: CategoryData[];
   recentOrders: Order[];
+  
+  // Operational Metrics for Staff
+  pendingOrders: number;
+  shippingOrders: number;
+  deliveredOrders: number;
+  averageProcessingTime?: string; // e.g. "4.2h"
 }

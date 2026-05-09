@@ -6,7 +6,6 @@ import { Badge } from '../../components/ui/badge';
 import { useGetProducts } from '../../../dataHook/productDataHook';
 import { useGetCategories } from '../../../dataHook/categoryDataHook';
 import { useAddToCart } from '../../../dataHook/cartDataHook';
-import { DynamicIcon } from '../../components/ui/DynamicIcon';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router';
 
@@ -89,10 +88,10 @@ export function HomePage() {
                 onClick={() => navigate(`/customer/products?category=${cat.name}`)}
               >
                 <CardContent className="flex flex-col items-center justify-center p-8 h-full">
-                  <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-zinc-100 text-zinc-900 group-hover:bg-black group-hover:text-white transition-all duration-300">
-                    <DynamicIcon name={cat.icon || 'HelpCircle'} className="h-8 w-8" />
-                  </div>
                   <span className="font-bold text-sm uppercase tracking-tight text-center text-foreground">{cat.name}</span>
+                  {cat.productCount !== undefined && (
+                    <span className="text-[10px] text-muted-foreground font-bold mt-1">{cat.productCount} Items</span>
+                  )}
                 </CardContent>
               </Card>
             ))}

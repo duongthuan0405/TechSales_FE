@@ -29,3 +29,23 @@ export const useResetPasswordMutation = () => {
     mutationFn: (email: string) => authService.resetPassword(email),
   });
 };
+
+export const useConfirmResetMutation = () => {
+  return useMutation({
+    mutationFn: ({ password, confirmPassword, token }: { password: string, confirmPassword: string, token: string }) => 
+      authService.confirmResetPassword(password, confirmPassword, token),
+  });
+};
+
+export const useVerifyEmailMutation = () => {
+  return useMutation({
+    mutationFn: (token: string) => authService.verifyEmail(token),
+  });
+};
+
+export const useChangePasswordMutation = () => {
+  return useMutation({
+    mutationFn: ({ oldPassword, newPassword, confirmPassword }: { oldPassword: string, newPassword: string, confirmPassword: string }) => 
+      authService.changePassword(oldPassword, newPassword, confirmPassword),
+  });
+};

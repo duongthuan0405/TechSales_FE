@@ -233,6 +233,30 @@ export function ProductDetailPage() {
                         <p className="text-sm text-muted-foreground leading-relaxed font-medium italic">
                           "{rev.comment}"
                         </p>
+
+                        {/* Multiple Responses */}
+                        {rev.responses && rev.responses.length > 0 ? (
+                          <div className="mt-4 space-y-3">
+                            {rev.responses.map((resp) => (
+                              <div key={resp.id} className="p-4 rounded-xl bg-muted/40 border-l-2 border-primary space-y-1">
+                                <div className="flex justify-between items-center">
+                                  <p className="text-[9px] font-bold uppercase tracking-widest text-primary">
+                                    {resp.userName || 'Official Response'}
+                                  </p>
+                                  <span className="text-[8px] text-muted-foreground uppercase font-medium">
+                                    {new Date(resp.createdAt).toLocaleDateString()}
+                                  </span>
+                                </div>
+                                <p className="text-xs text-foreground font-medium leading-relaxed italic">"{resp.content}"</p>
+                              </div>
+                            ))}
+                          </div>
+                        ) : rev.reply ? (
+                          <div className="mt-4 p-4 rounded-xl bg-muted/40 border-l-2 border-primary space-y-1">
+                            <p className="text-[9px] font-bold uppercase tracking-widest text-primary">Official Response</p>
+                            <p className="text-xs text-foreground font-medium leading-relaxed italic">"{rev.reply}"</p>
+                          </div>
+                        ) : null}
                       </div>
                     </div>
                   ))}

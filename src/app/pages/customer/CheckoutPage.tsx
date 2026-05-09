@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
-import { Input } from '../../components/ui/input';
+import { Input } from '../../components/ui/Input';
 import { Label } from '../../components/ui/label';
 import { RadioGroup, RadioGroupItem } from '../../components/ui/radio-group';
 import { Separator } from '../../components/ui/separator';
@@ -26,7 +26,7 @@ import { useGetAddresses } from '../../../dataHook/addressDataHook';
 import { useValidateVoucher } from '../../../dataHook/voucherDataHook';
 import { VoucherModal } from '../../components/customer/VoucherModal';
 import { Voucher, VoucherType } from '../../../models/ui_types/voucher';
-import { DynamicIcon } from '../../components/ui/DynamicIcon';
+import { DynamicIcon } from '../../components/ui/dynamicIcon';
 import { toast } from 'sonner';
 
 export function CheckoutPage() {

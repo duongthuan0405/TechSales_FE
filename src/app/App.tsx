@@ -15,7 +15,6 @@ import { OrderDetailPage } from './pages/customer/OrderDetailPage';
 import { ProfilePage } from './pages/customer/ProfilePage';
 import { ChangePasswordPage } from './pages/customer/ChangePasswordPage';
 import { AddressBookPage } from './pages/customer/AddressBookPage';
-import { SalesDashboardPage } from './pages/sales/SalesDashboardPage';
 import { OrderManagementPage } from './pages/sales/OrderManagementPage';
 import { BusinessDashboardPage } from './pages/business/BusinessDashboardPage';
 import { ProductManagementPage } from './pages/business/ProductManagementPage';
@@ -26,6 +25,7 @@ import { Toaster } from 'sonner';
 
 
 import { Loader2 } from 'lucide-react';
+import { SalesDashboardPage } from './pages/sales/salesdashboardpage';
 
 function AppContent() {
   const { user, isLoading, logout } = useAuth();

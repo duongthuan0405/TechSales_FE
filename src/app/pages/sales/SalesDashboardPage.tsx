@@ -113,13 +113,13 @@ export function SalesDashboardPage() {
                 <TableRow key={order.id}>
                   <TableCell className="font-medium">{order.id}</TableCell>
                   <TableCell>{order.customerName}</TableCell>
-                  <TableCell>{new Date(order.date).toLocaleDateString()}</TableCell>
+                  <TableCell>{new Date(order.createdAt).toLocaleDateString()}</TableCell>
                   <TableCell>
                     <Badge variant={getStatusVariant(order.status)}>
                       {order.status}
                     </Badge>
                   </TableCell>
-                  <TableCell className="font-semibold">${order.total.toLocaleString()}</TableCell>
+                  <TableCell className="font-semibold">${order.totalAmount.toLocaleString()}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

@@ -4,9 +4,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { Badge } from '../../components/ui/badge';
 import { users } from '../../../data/mockData';
 import { Users, Shield, Database, Activity } from 'lucide-react';
+import { UserStatus } from '../../../models/ui_types/user';
 
 export function TechnicalDashboardPage() {
-  const activeUsers = users.filter(u => u.status === 'active').length;
+  const activeUsers = users.filter(u => u.status === UserStatus.ACTIVE).length;
   const systemLogs = [
     { id: 1, timestamp: '2026-05-08 11:23:45', level: 'info', message: 'User login successful', user: 'john.smith@email.com' },
     { id: 2, timestamp: '2026-05-08 11:22:12', level: 'warning', message: 'High memory usage detected', user: 'system' },
@@ -81,7 +82,7 @@ export function TechnicalDashboardPage() {
                   <TableRow key={user.id}>
                     <TableCell>
                       <div>
-                        <div className="font-medium">{user.name}</div>
+                        <div className="font-medium">{user.fullName}</div>
                         <div className="text-xs text-muted-foreground">{user.email}</div>
                       </div>
                     </TableCell>
@@ -89,7 +90,7 @@ export function TechnicalDashboardPage() {
                       <Badge variant="secondary">{user.role}</Badge>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={user.status === 'active' ? 'success' : 'secondary'}>
+                      <Badge variant={user.status === UserStatus.ACTIVE ? 'success' : 'secondary'}>
                         {user.status}
                       </Badge>
                     </TableCell>

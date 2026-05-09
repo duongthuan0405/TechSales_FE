@@ -8,16 +8,17 @@ import { PaymentMethod } from '../models/ui_types/paymentMethod';
 import { Address } from '../models/ui_types/address';
 import { Review, ReviewStatus } from '../models/ui_types/review';
 import { Voucher, VoucherType } from '../models/ui_types/voucher';
+import { Notification } from '../models/ui_types/notification';
 
 export let mockCart: CartItem[] = [];
 
 export const categories: Category[] = [
-  { id: 'cat1', name: 'Laptops', icon: 'Laptop', productCount: 124, createdAt: '2024-01-01T00:00:00Z' },
-  { id: 'cat2', name: 'Smartphones', icon: 'Smartphone', productCount: 86, createdAt: '2024-01-01T00:00:00Z' },
-  { id: 'cat3', name: 'Monitors', icon: 'Monitor', productCount: 52, createdAt: '2024-01-01T00:00:00Z' },
-  { id: 'cat4', name: 'Gaming', icon: 'Gamepad2', productCount: 43, createdAt: '2024-01-01T00:00:00Z' },
-  { id: 'cat5', name: 'Accessories', icon: 'Plug2', productCount: 95, createdAt: '2024-01-01T00:00:00Z' },
-  { id: 'cat6', name: 'Audio', icon: 'Speaker', productCount: 28, createdAt: '2024-01-01T00:00:00Z' },
+  { id: 'cat1', name: 'Laptops', productCount: 124, createdAt: '2024-01-01T00:00:00Z' },
+  { id: 'cat2', name: 'Smartphones', productCount: 86, createdAt: '2024-01-01T00:00:00Z' },
+  { id: 'cat3', name: 'Monitors', productCount: 52, createdAt: '2024-01-01T00:00:00Z' },
+  { id: 'cat4', name: 'Gaming', productCount: 43, createdAt: '2024-01-01T00:00:00Z' },
+  { id: 'cat5', name: 'Accessories', productCount: 95, createdAt: '2024-01-01T00:00:00Z' },
+  { id: 'cat6', name: 'Audio', productCount: 28, createdAt: '2024-01-01T00:00:00Z' },
 ];
 
 export const paymentMethods: PaymentMethod[] = [
@@ -352,7 +353,25 @@ export let mockReviews: Review[] = [
     rating: 5,
     comment: 'Amazing performance! The M3 chip is a beast.',
     status: ReviewStatus.VISIBLE,
-    createdAt: new Date(Date.now() - 86400000 * 2).toISOString()
+    createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
+    responses: [
+      {
+        id: 'resp-1',
+        reviewId: 'rev-1',
+        userId: 'u3',
+        userName: 'Tech Support',
+        content: 'Thank you for your feedback! We are glad you enjoy the M3 performance.',
+        createdAt: new Date(Date.now() - 86400000).toISOString()
+      },
+      {
+        id: 'resp-2',
+        reviewId: 'rev-1',
+        userId: 'u2',
+        userName: 'Business Manager',
+        content: 'We prioritize top-tier performance for our professional users.',
+        createdAt: new Date(Date.now() - 43200000).toISOString()
+      }
+    ]
   },
   {
     id: 'rev-2',
@@ -406,5 +425,46 @@ export const vouchers: Voucher[] = [
     endDate: '2026-12-31',
     usageCount: 12,
     isActive: true
+  }
+];
+
+export const mockNotifications: Notification[] = [
+  {
+    id: 'n1',
+    userId: 'u4',
+    title: 'Order Protocol Initialized',
+    message: 'Your order #ORD1234 has been successfully placed in the shipping queue.',
+    type: 'order',
+    isRead: false,
+    createdAt: new Date(Date.now() - 3600000).toISOString(),
+    link: '/customer/orders/ORD1234'
+  },
+  {
+    id: 'n2',
+    userId: 'u4',
+    title: 'Security Alert',
+    message: 'New login detected from a secure terminal in Hanoi, VN.',
+    type: 'security',
+    isRead: true,
+    createdAt: new Date(Date.now() - 86400000).toISOString(),
+  },
+  {
+    id: 'n3',
+    userId: 'u4',
+    title: 'System Synced',
+    message: 'Hardware firmware update v2.4.0 is now available for your ecosystem.',
+    type: 'system',
+    isRead: false,
+    createdAt: new Date(Date.now() - 172800000).toISOString(),
+  },
+  {
+    id: 'n4',
+    userId: 'u4',
+    title: 'Exclusive Access',
+    message: 'New industrial monitors have been added to the catalog. Check them out now!',
+    type: 'promo',
+    isRead: true,
+    createdAt: new Date(Date.now() - 259200000).toISOString(),
+    link: '/customer/products'
   }
 ];
