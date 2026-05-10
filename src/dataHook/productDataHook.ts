@@ -55,3 +55,14 @@ export const useDeleteProduct = () => {
     },
   });
 };
+
+export const useToggleProductStatus = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => productService.toggleProductDiscontinue(id),
+    onSuccess: (updatedProduct) => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['product', updatedProduct.id] });
+    },
+  });
+};

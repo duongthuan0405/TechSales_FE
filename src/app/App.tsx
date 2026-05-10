@@ -19,8 +19,12 @@ import { OrderManagementPage } from './pages/sales/OrderManagementPage';
 import { OrderManagementDetailPage } from './pages/sales/OrderManagementDetailPage';
 import { ReviewManagementPage } from './pages/sales/ReviewManagementPage';
 import { StaffProductDetailPage } from './pages/sales/StaffProductDetailPage';
+import { CustomerManagementPage } from './pages/business/CustomerManagementPage';
+import { StaffManagementPage } from './pages/business/StaffManagementPage';
 import { BusinessDashboardPage } from './pages/business/BusinessDashboardPage';
 import { ProductManagementPage } from './pages/business/ProductManagementPage';
+import { CategoryManagementPage } from './pages/business/CategoryManagementPage';
+import { ReportsPage } from './pages/business/ReportsPage';
 import { TechnicalDashboardPage } from './pages/technical/TechnicalDashboardPage';
 import { UserManagementPage } from './pages/technical/UserManagementPage';
 import { Button } from './components/ui/button';
@@ -121,6 +125,13 @@ function AppContent() {
           <>
             <Route path="/business" element={<BusinessDashboardPage />} />
             <Route path="/business/products" element={<ProductManagementPage />} />
+            <Route path="/business/categories" element={<CategoryManagementPage />} />
+            <Route path="/business/products/:id" element={<StaffProductDetailPage />} />
+            <Route path="/business/customers" element={<CustomerManagementPage />} />
+            <Route path="/business/staff" element={<StaffManagementPage />} />
+            <Route path="/business/reports" element={<ReportsPage />} />
+            <Route path="/business/orders/:id" element={<OrderManagementDetailPage readOnly={true} />} />
+            <Route path="/business/profile" element={<ProfilePage />} />
           </>
         )}
 

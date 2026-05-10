@@ -3,7 +3,6 @@ import { Order, OrderStatus } from '../models/ui_types/order';
 import { User, UserStatus } from '../models/ui_types/user';
 import { Category } from '../models/ui_types/category';
 import { CartItem } from '../models/ui_types/cart';
-import { Customer } from '../models/ui_types/customer';
 import { PaymentMethod } from '../models/ui_types/paymentMethod';
 import { Address } from '../models/ui_types/address';
 import { Review, ReviewStatus } from '../models/ui_types/review';
@@ -297,18 +296,6 @@ export const users: User[] = [
   },
 ];
 
-export const customers: Customer[] = [
-  {
-    id: 'c1',
-    name: 'John Smith',
-    email: 'john.smith@email.com',
-    phone: '+1 (555) 123-4567',
-    address: '123 Main St, New York, NY 10001',
-    totalOrders: 12,
-    totalSpent: 15847,
-    joinDate: '2024-03-15',
-  },
-];
 
 export const salesData = [
   { month: 'Jan', revenue: 45000, orders: 234 },

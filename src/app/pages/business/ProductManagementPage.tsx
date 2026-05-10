@@ -25,22 +25,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../../components/ui/dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "../../components/ui/alert-dialog";
-import { Search, Edit, Trash2, Plus, Loader2, PackageSearch } from "lucide-react";
+import { Search, Edit, Ban, Plus, Loader2, PackageSearch, Eye, RefreshCcw } from "lucide-react";
 import { 
   useGetProducts, 
   useCreateProduct, 
-  useUpdateProduct, 
-  useDeleteProduct 
+  useUpdateProduct,
+  useToggleProductStatus 
 } from "../../../dataHook/productDataHook";
 import { useNavigate } from "react-router";
 import { Product, ProductStatus } from "../../../models/ui_types/product";
@@ -56,7 +46,7 @@ export function ProductManagementPage({ readOnly = false }: ProductManagementPag
   const { data: products = [], isLoading } = useGetProducts();
   const createMutation = useCreateProduct();
   const updateMutation = useUpdateProduct();
-  const deleteMutation = useDeleteProduct();
+  const toggleStatusMutation = useToggleProductStatus();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
@@ -64,7 +54,6 @@ export function ProductManagementPage({ readOnly = false }: ProductManagementPag
   // Dialog states
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | undefined>(undefined);
-  const [deletingProductId, setDeletingProductId] = useState<string | null>(null);
 
   const categories = [
     "all",
@@ -110,10 +99,6 @@ export function ProductManagementPage({ readOnly = false }: ProductManagementPag
     setIsFormOpen(true);
   };
 
-  const handleDeleteClick = (id: string) => {
-    setDeletingProductId(id);
-  };
-
   const onFormSubmit = (data: any) => {
     if (editingProduct) {
       updateMutation.mutate(
@@ -137,16 +122,15 @@ export function ProductManagementPage({ readOnly = false }: ProductManagementPag
     }
   };
 
-  const confirmDelete = () => {
-    if (deletingProductId) {
-      deleteMutation.mutate(deletingProductId, {
-        onSuccess: () => {
-          toast.success("Product deleted successfully");
-          setDeletingProductId(null);
-        },
-        onError: () => toast.error("Failed to delete product"),
-      });
-    }
+  const handleToggleStatus = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    toggleStatusMutation.mutate(id, {
+      onSuccess: (updated) => {
+        const isDisc = updated.status === ProductStatus.DISCONTINUED;
+        toast.success(`Product ${isDisc ? 'discontinued' : 'activated'} successfully`);
+      },
+      onError: () => toast.error("Failed to update product status"),
+    });
   };
 
   return (
@@ -221,17 +205,23 @@ export function ProductManagementPage({ readOnly = false }: ProductManagementPag
                   <TableHead>Price</TableHead>
                   <TableHead>Stock</TableHead>
                   <TableHead>Status</TableHead>
-                  {!readOnly && <TableHead className="text-right">Actions</TableHead>}
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredProducts.map((product) => {
                   const stockVariant = mapStockToVariant(product.stock);
+                  const isDiscontinued = product.status === ProductStatus.DISCONTINUED;
+                  const isToggling = toggleStatusMutation.isPending && toggleStatusMutation.variables === product.id;
+
                   return (
                     <TableRow 
                       key={product.id}
-                      className={readOnly ? "cursor-pointer hover:bg-muted/50 transition-colors" : ""}
-                      onClick={() => readOnly && navigate(`/sales/products/${product.id}`)}
+                      className="cursor-pointer hover:bg-muted/50 transition-colors"
+                      onClick={() => {
+                        const basePath = readOnly ? '/sales' : '/business';
+                        navigate(`${basePath}/products/${product.id}`);
+                      }}
                     >
                       <TableCell>
                         <div className="flex items-center gap-3">
@@ -244,7 +234,7 @@ export function ProductManagementPage({ readOnly = false }: ProductManagementPag
                           </div>
                           <div className="min-w-0">
                             <div className="font-semibold truncate">{product.name}</div>
-                            <div className="text-xs text-muted-foreground font-mono">
+                            <div className="text-xs text-muted-foreground font-mono text-[10px]">
                               {product.id}
                             </div>
                           </div>
@@ -268,26 +258,52 @@ export function ProductManagementPage({ readOnly = false }: ProductManagementPag
                           {product.status}
                         </Badge>
                       </TableCell>
-                      {!readOnly && (
-                        <TableCell onClick={(e) => e.stopPropagation()} className="text-right">
-                          <div className="flex justify-end gap-1">
-                            <Button 
-                              variant="ghost" 
-                              size="icon"
-                              onClick={() => handleEdit(product)}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="icon"
-                              onClick={() => handleDeleteClick(product.id)}
-                            >
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      )}
+                      <TableCell onClick={(e) => e.stopPropagation()} className="text-right">
+                        <div className="flex justify-end gap-1">
+                          <Button 
+                            variant="ghost" 
+                            size="icon"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const basePath = readOnly ? '/sales' : '/business';
+                              navigate(`${basePath}/products/${product.id}`);
+                            }}
+                            title="View Details"
+                          >
+                            <Eye className="h-4 w-4 text-primary" />
+                          </Button>
+                          {!readOnly && (
+                            <>
+                              <Button 
+                                variant="ghost" 
+                                size="icon"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleEdit(product);
+                                }}
+                                title="Edit Product"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="icon"
+                                onClick={(e) => handleToggleStatus(product.id, e)}
+                                title={isDiscontinued ? "Activate Product" : "Discontinue Product"}
+                                disabled={isToggling}
+                              >
+                                {isToggling ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : isDiscontinued ? (
+                                  <RefreshCcw className="h-4 w-4 text-success" />
+                                ) : (
+                                  <Ban className="h-4 w-4 text-destructive" />
+                                )}
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      </TableCell>
                     </TableRow>
                   );
                 })}
@@ -313,31 +329,6 @@ export function ProductManagementPage({ readOnly = false }: ProductManagementPag
           />
         </DialogContent>
       </Dialog>
-
-      {/* Delete Confirmation */}
-      <AlertDialog 
-        open={!!deletingProductId} 
-        onOpenChange={(open) => !open && setDeletingProductId(null)}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the product
-              and remove it from our catalog.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={confirmDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {deleteMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Delete"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }
