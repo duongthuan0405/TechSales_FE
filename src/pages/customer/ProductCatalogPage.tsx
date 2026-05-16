@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -39,17 +39,19 @@ export function ProductCatalogPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   
-  const selectedCategory = searchParams.get('category') || 'all';
+  const selectedCategoryId = searchParams.get('categoryIds') || 'all';
   const [minPrice, setMinPrice] = useState<string>('');
   const [maxPrice, setMaxPrice] = useState<string>('');
   const [sortBy, setSortBy] = useState<string>('newest');
 
-  const setSelectedCategory = (category: string) => {
+  const { data: categoriesData = [], isLoading: isCatsLoading } = useGetCategories();
+
+  const setSelectedCategory = (categoryId: string) => {
     const newParams = new URLSearchParams(searchParams);
-    if (category === 'all') {
-      newParams.delete('category');
+    if (categoryId === 'all') {
+      newParams.delete('categoryIds');
     } else {
-      newParams.set('category', category);
+      newParams.set('categoryIds', categoryId);
     }
     setSearchParams(newParams);
   };
@@ -59,15 +61,16 @@ export function ProductCatalogPage() {
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  const { data: products = [], isLoading, isError } = useGetProducts({
+  const productParams = useMemo(() => ({
     search: debouncedSearch,
-    category: selectedCategory,
+    categoryIds: selectedCategoryId,
     minPrice: minPrice ? Number(minPrice) : undefined,
     maxPrice: maxPrice ? Number(maxPrice) : undefined,
     sortBy: sortBy as any
-  });
+  }), [debouncedSearch, selectedCategoryId, minPrice, maxPrice, sortBy]);
 
-  const { data: categoriesData = [] } = useGetCategories();
+  const { data: products = [], isLoading, isError } = useGetProducts(productParams);
+
   const { mutate: addToCart, isPending: isAdding } = useAddToCart();
 
   useEffect(() => {
@@ -122,7 +125,7 @@ export function ProductCatalogPage() {
                 <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Category</span>
               </div>
               <Select 
-                value={selectedCategory} 
+                value={selectedCategoryId} 
                 onValueChange={setSelectedCategory}
               >
                 <SelectTrigger className="h-10 rounded-lg border-border bg-card">
@@ -131,7 +134,7 @@ export function ProductCatalogPage() {
                 <SelectContent>
                   <SelectItem value="all">All Categories</SelectItem>
                   {categoriesData.map(cat => (
-                    <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
+                    <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -238,7 +241,7 @@ export function ProductCatalogPage() {
                 />
                 <div className="absolute right-3 top-3">
                   <Badge className="bg-primary text-primary-foreground border-none font-bold text-[8px] uppercase tracking-wider px-2 py-0.5 rounded-md">
-                    {product.categoryName}
+                    {categoriesData.find(c => c.id === product.categoryId)?.name || 'Hardware'}
                   </Badge>
                 </div>
               </div>

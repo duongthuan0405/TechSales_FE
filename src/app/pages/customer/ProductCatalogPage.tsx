@@ -34,17 +34,17 @@ export function ProductCatalogPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   
-  const selectedCategory = searchParams.get('category') || 'all';
+  const selectedCategoryId = searchParams.get('category') || 'all';
   const [minPrice, setMinPrice] = useState<string>('');
   const [maxPrice, setMaxPrice] = useState<string>('');
   const [sortBy, setSortBy] = useState<string>('newest');
 
-  const setSelectedCategory = (category: string) => {
+  const setSelectedCategory = (categoryId: string) => {
     const newParams = new URLSearchParams(searchParams);
-    if (category === 'all') {
+    if (categoryId === 'all') {
       newParams.delete('category');
     } else {
-      newParams.set('category', category);
+      newParams.set('category', categoryId);
     }
     setSearchParams(newParams);
   };
@@ -56,7 +56,7 @@ export function ProductCatalogPage() {
 
   const { data: products = [], isLoading, isError } = useGetProducts({
     search: debouncedSearch,
-    category: selectedCategory,
+    categoryIds: selectedCategoryId === 'all' ? undefined : selectedCategoryId,
     minPrice: minPrice ? Number(minPrice) : undefined,
     maxPrice: maxPrice ? Number(maxPrice) : undefined,
     sortBy: sortBy as any
@@ -116,14 +116,14 @@ export function ProductCatalogPage() {
                 <Tag className="h-3 w-3 text-muted-foreground" />
                 <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Category</span>
               </div>
-              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+              <Select value={selectedCategoryId} onValueChange={setSelectedCategory}>
                 <SelectTrigger className="h-10 rounded-lg border-border bg-card">
                   <SelectValue placeholder="All Categories" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Categories</SelectItem>
                   {categoriesData.map(cat => (
-                    <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
+                    <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>

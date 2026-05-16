@@ -47,7 +47,7 @@ const mapProductDetail = (dto: ProductDetailDto): Product => ({
 // ─── Public Interface (signatures kept compatible) ──────────
 export interface ProductQueryParams {
   search?: string;
-  category?: string;
+  categoryIds?: string;
   minPrice?: number;
   maxPrice?: number;
   brand?: string;
@@ -60,9 +60,12 @@ export const productService = {
     const query = new URLSearchParams();
 
     if (params?.search) query.set('keyword', params.search);
-    if (params?.category && params.category !== 'all') {
-      query.append('categoryIds', params.category);
+    if (params?.categoryIds && params.categoryIds !== 'all') {
+      query.set('categoryIds', params.categoryIds);
     }
+
+    console.log(params);
+    
     if (params?.sortBy) {
       // Map FE sort to BE SortOrder enum (ASC=1, DESC=2)
       // Note: BE only supports price sorting via ASC/DESC in SearchProductsAsync
