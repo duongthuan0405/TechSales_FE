@@ -25,9 +25,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../../components/ui/dialog";
-import { Search, Edit, Ban, Plus, Loader2, PackageSearch, Eye, RefreshCcw } from "lucide-react";
+import { Search, Edit, Ban, Plus, Loader2, PackageSearch, Eye, RefreshCcw, PackagePlus } from "lucide-react";
 import { 
-  useGetProducts, 
+  useGetAdminProducts, 
   useCreateProduct, 
   useUpdateProduct,
   useToggleProductStatus 
@@ -35,7 +35,10 @@ import {
 import { useNavigate } from "react-router";
 import { Product, ProductStatus } from "../../../models/ui_types/product";
 import { ProductForm } from "../../components/business/ProductForm";
+import { StockAdjustmentForm } from "../../components/business/StockAdjustmentForm";
+import { useUpdateInventory } from "../../../dataHook/productDataHook";
 import { toast } from "sonner";
+import { formatCurrency } from "../../../utils/format";
 
 interface ProductManagementPageProps {
   readOnly?: boolean;
@@ -43,17 +46,22 @@ interface ProductManagementPageProps {
 
 export function ProductManagementPage({ readOnly = false }: ProductManagementPageProps) {
   const navigate = useNavigate();
-  const { data: products = [], isLoading } = useGetProducts();
+  const { data: adminData, isLoading } = useGetAdminProducts({ pageSize: 100 });
+  const products = adminData?.items || [];
   const createMutation = useCreateProduct();
   const updateMutation = useUpdateProduct();
   const toggleStatusMutation = useToggleProductStatus();
+  const updateInventoryMutation = useUpdateInventory();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
   
   // Dialog states
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | undefined>(undefined);
+  const [isStockOpen, setIsStockOpen] = useState(false);
+  const [adjustingProduct, setAdjustingProduct] = useState<Product | undefined>(undefined);
 
   const categories = [
     "all",
@@ -66,7 +74,9 @@ export function ProductManagementPage({ readOnly = false }: ProductManagementPag
       product.brand?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory =
       categoryFilter === "all" || product.categoryName === categoryFilter;
-    return matchesSearch && matchesCategory;
+    const matchesStatus = 
+      statusFilter === "all" || product.status === statusFilter;
+    return matchesSearch && matchesCategory && matchesStatus;
   });
 
   const mapStockToVariant = (stock: number): "success" | "warning" | "danger" | "default" => {
@@ -125,12 +135,31 @@ export function ProductManagementPage({ readOnly = false }: ProductManagementPag
   const handleToggleStatus = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     toggleStatusMutation.mutate(id, {
-      onSuccess: (updated) => {
-        const isDisc = updated.status === ProductStatus.DISCONTINUED;
-        toast.success(`Product ${isDisc ? 'discontinued' : 'activated'} successfully`);
+      onSuccess: () => {
+        toast.success(`Product discontinued successfully`);
       },
       onError: () => toast.error("Failed to update product status"),
     });
+  };
+
+  const handleAdjustStock = (product: Product, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setAdjustingProduct(product);
+    setIsStockOpen(true);
+  };
+
+  const onStockSubmit = (data: { value: number; type: "ADD" | "SET" }) => {
+    if (!adjustingProduct) return;
+    updateInventoryMutation.mutate(
+      { id: adjustingProduct.id, ...data },
+      {
+        onSuccess: () => {
+          toast.success("Stock adjusted successfully");
+          setIsStockOpen(false);
+        },
+        onError: () => toast.error("Failed to adjust stock"),
+      }
+    );
   };
 
   return (
@@ -158,21 +187,37 @@ export function ProductManagementPage({ readOnly = false }: ProductManagementPag
             className="pl-9"
           />
         </div>
-        <Select
-          value={categoryFilter}
-          onValueChange={setCategoryFilter}
-        >
-          <SelectTrigger className="w-[200px]">
-            <SelectValue placeholder="All Categories" />
-          </SelectTrigger>
-          <SelectContent>
-            {categories.map((cat) => (
-              <SelectItem key={cat as string} value={cat as string ?? ""}>
-                {cat === "all" ? "All Categories" : cat as string}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="flex gap-2">
+          <Select
+            value={categoryFilter}
+            onValueChange={setCategoryFilter}
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="All Categories" />
+            </SelectTrigger>
+            <SelectContent>
+              {categories.map((cat) => (
+                <SelectItem key={cat as string} value={cat as string ?? ""}>
+                  {cat === "all" ? "All Categories" : cat as string}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select
+            value={statusFilter}
+            onValueChange={setStatusFilter}
+          >
+            <SelectTrigger className="w-[160px]">
+              <SelectValue placeholder="All Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value={ProductStatus.ACTIVE}>Active</SelectItem>
+              <SelectItem value={ProductStatus.DISCONTINUED}>Discontinued</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {isLoading ? (
@@ -243,7 +288,7 @@ export function ProductManagementPage({ readOnly = false }: ProductManagementPag
                       <TableCell>{product.categoryName}</TableCell>
                       <TableCell>{product.brand}</TableCell>
                       <TableCell className="font-bold">
-                        ${product.price.toLocaleString()}
+                        {formatCurrency(product.price)}
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-col gap-1">
@@ -288,18 +333,26 @@ export function ProductManagementPage({ readOnly = false }: ProductManagementPag
                               <Button 
                                 variant="ghost" 
                                 size="icon"
-                                onClick={(e) => handleToggleStatus(product.id, e)}
-                                title={isDiscontinued ? "Activate Product" : "Discontinue Product"}
-                                disabled={isToggling}
+                                onClick={(e) => handleAdjustStock(product, e)}
+                                title="Adjust Stock"
                               >
-                                {isToggling ? (
-                                  <Loader2 className="h-4 w-4 animate-spin" />
-                                ) : isDiscontinued ? (
-                                  <RefreshCcw className="h-4 w-4 text-success" />
-                                ) : (
-                                  <Ban className="h-4 w-4 text-destructive" />
-                                )}
+                                <PackagePlus className="h-4 w-4 text-orange-500" />
                               </Button>
+                              {!isDiscontinued && (
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon"
+                                  onClick={(e) => handleToggleStatus(product.id, e)}
+                                  title="Discontinue Product"
+                                  disabled={isToggling}
+                                >
+                                  {isToggling ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <Ban className="h-4 w-4 text-destructive" />
+                                  )}
+                                </Button>
+                              )}
                             </>
                           )}
                         </div>
@@ -327,6 +380,25 @@ export function ProductManagementPage({ readOnly = false }: ProductManagementPag
             onSubmit={onFormSubmit}
             isLoading={createMutation.isPending || updateMutation.isPending}
           />
+        </DialogContent>
+      </Dialog>
+
+      {/* Stock Adjustment Dialog */}
+      <Dialog open={isStockOpen} onOpenChange={setIsStockOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Stock Adjustment</DialogTitle>
+            <DialogDescription>
+              Modify inventory for <span className="font-bold text-foreground">{adjustingProduct?.name}</span>.
+            </DialogDescription>
+          </DialogHeader>
+          {adjustingProduct && (
+            <StockAdjustmentForm 
+              product={adjustingProduct} 
+              onSubmit={onStockSubmit}
+              isLoading={updateInventoryMutation.isPending}
+            />
+          )}
         </DialogContent>
       </Dialog>
     </div>

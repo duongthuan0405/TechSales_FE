@@ -4,13 +4,15 @@ export enum UserStatus {
   BLOCKED = 'BLOCKED'
 }
 
-export type UserRole = 'Staff' | 'Customer' | 'BusinessAdmin' | 'TechnicalAdmin';
+export type UserRole = 'Staff' | 'Customer' | 'Business Admin' | 'Technical Admin';
 
 export interface AuthUser {
   id: string;
   name: string;
   email: string;
   role: UserRole;
+  phone?: string;
+  avatarUrl?: string;
 }
 
 export interface User {

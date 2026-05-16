@@ -31,4 +31,5 @@ export interface Order {
   customerName?: string; // UI convenience
   paymentMethodId?: string; // Relation in DB
   paymentMethodName?: string; // UI convenience
+  paymentStatus?: number; // UI convenience
 }

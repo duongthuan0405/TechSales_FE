@@ -18,9 +18,9 @@ interface UserDto {
 
 // ─── Role Mapping ───────────────────────────────────────────
 const mapRole = (roles: string[]): UserRole => {
-  if (roles.includes('Admin')) return 'TechnicalAdmin';
+  if (roles.includes('Admin')) return 'Technical Admin';
   if (roles.includes('Staff')) return 'Staff';
-  if (roles.includes('BusinessAdmin')) return 'BusinessAdmin';
+  if (roles.includes('Business Admin')) return 'Business Admin';
   return 'Customer';
 };
 
@@ -53,9 +53,10 @@ export const userService = {
   },
 
   getStaff: async (): Promise<User[]> => {
-    // BE doesn't have a separate staff list endpoint
-    // Return empty — or could be added later
-    return [];
+    const paged = await api.get<PagedResponse<UserDto>>(
+      '/admin/users/staff?pageNumber=1&pageSize=100',
+    );
+    return paged.items.map(mapUser);
   },
 
   getUserById: async (_id: string): Promise<User> => {
@@ -65,14 +66,23 @@ export const userService = {
     return mapUser(dto);
   },
 
-  createUser: async (_userData: Omit<User, 'id' | 'createdAt'>): Promise<User> => {
-    // BE doesn't have an admin create-user endpoint
-    throw new Error('Create user is not supported by the server.');
+  createUser: async (userData: Omit<User, 'id' | 'createdAt'>): Promise<User> => {
+    // Map UI role back to BE role string
+    const beRole = userData.role === 'Technical Admin' ? 'Technical Admin' : 
+                   userData.role === 'Business Admin' ? 'Business Admin' : 'Staff';
+
+    const dto = await api.post<UserDto>('/admin/users', {
+      email: userData.email,
+      password: 'TemporaryPassword123!', // You might want to let the admin set this
+      roles: [beRole]
+    });
+    return mapUser(dto);
   },
 
-  updateUser: async (_id: string, _userData: Partial<User>): Promise<User> => {
-    // For self-profile update
-    throw new Error('Update user is not supported. Use profile update instead.');
+  updateUser: async (id: string, userData: Partial<User>): Promise<User> => {
+    // This is for admin updates of any user
+    const dto = await api.put<UserDto>(`/admin/users/${id}`, userData);
+    return mapUser(dto);
   },
 
   updateProfile: async (data: {
@@ -85,20 +95,37 @@ export const userService = {
   },
 
   toggleUserStatus: async (id: string, currentStatus: UserStatus): Promise<User> => {
-    if (currentStatus === UserStatus.BLOCKED) {
+    const isBlocking = currentStatus !== UserStatus.BLOCKED;
+    if (!isBlocking) {
       await api.post(`/admin/users/${id}/unlock`);
     } else {
       await api.post(`/admin/users/${id}/lock`, { until: null });
     }
-    // Refetch users to get updated status
-    const users = await userService.getCustomers();
-    const updated = users.find(u => u.id === id);
-    if (!updated) throw new Error('User not found after status update');
+
+    // Try to find in customers first
+    const customers = await userService.getCustomers();
+    let updated = customers.find(u => u.id === id);
+    
+    // If not in customers, try staff
+    if (!updated) {
+      const staff = await userService.getStaff();
+      updated = staff.find(u => u.id === id);
+    }
+
+    if (!updated) {
+      // Fallback: return manual update if refetch fails to find user (should not happen usually)
+      return {
+        id,
+        status: isBlocking ? UserStatus.BLOCKED : UserStatus.ACTIVE,
+        // These fields might be stale but at least we don't throw
+        email: '', 
+        fullName: '',
+        role: 'Customer',
+        createdAt: new Date().toISOString()
+      } as User;
+    }
     return updated;
   },
 
-  deleteUser: async (_id: string): Promise<void> => {
-    // BE doesn't have a delete user endpoint
-    throw new Error('Delete user is not supported by the server.');
-  },
+
 };

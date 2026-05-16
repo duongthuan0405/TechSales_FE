@@ -18,6 +18,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/ta
 import { useGetProduct } from '../../../dataHook/productDataHook';
 import { useGetProductReviews } from '../../../dataHook/reviewDataHook';
 import { useAddToCart } from '../../../dataHook/cartDataHook';
+import { ProductStatus } from '../../../models/ui_types/product';
 import { toast } from 'sonner';
 import { Separator } from '../../components/ui/separator';
 
@@ -92,6 +93,9 @@ export function ProductDetailPage() {
           <div className="flex items-baseline gap-2">
             <span className="text-4xl font-bold text-foreground tracking-tight">${product.price.toLocaleString()}</span>
             <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">USD</span>
+            {product.status === ProductStatus.DISCONTINUED && (
+              <Badge variant="danger" className="ml-4 px-3 py-1 text-[10px] font-black uppercase tracking-widest animate-pulse">Discontinued / Inactive</Badge>
+            )}
           </div>
 
           <p className="text-base leading-relaxed text-muted-foreground font-medium">
@@ -105,14 +109,16 @@ export function ProductDetailPage() {
                 <div className="flex items-center gap-1 bg-muted/50 p-1 rounded-xl border border-border/50">
                   <button 
                     onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    className="flex h-9 w-9 items-center justify-center rounded-lg bg-card shadow-sm border border-border transition-colors hover:bg-muted"
+                    disabled={product.status === ProductStatus.DISCONTINUED}
+                    className="flex h-9 w-9 items-center justify-center rounded-lg bg-card shadow-sm border border-border transition-colors hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Minus className="h-3.5 w-3.5" />
                   </button>
                   <span className="w-10 text-center font-bold text-base">{quantity}</span>
                   <button 
                     onClick={() => setQuantity(quantity + 1)}
-                    className="flex h-9 w-9 items-center justify-center rounded-lg bg-card shadow-sm border border-border transition-colors hover:bg-muted"
+                    disabled={product.status === ProductStatus.DISCONTINUED}
+                    className="flex h-9 w-9 items-center justify-center rounded-lg bg-card shadow-sm border border-border transition-colors hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Plus className="h-3.5 w-3.5" />
                   </button>
@@ -130,20 +136,30 @@ export function ProductDetailPage() {
                 size="lg" 
                 className="h-12 flex-[2] rounded-xl text-xs font-bold bg-primary text-primary-foreground uppercase tracking-widest hover:opacity-90 transition-all"
                 onClick={handleAddToCart}
-                disabled={isAdding || product.stock === 0}
+                disabled={isAdding || product.stock === 0 || product.status === ProductStatus.DISCONTINUED}
               >
                 {isAdding ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ShoppingCart className="mr-2 h-4 w-4" />}
-                Add to Cart
+                {product.status === ProductStatus.DISCONTINUED ? 'Not Available' : 'Add to Cart'}
               </Button>
               <Button 
                 size="lg" 
                 variant="outline" 
                 className="h-12 flex-1 rounded-xl text-xs font-bold border-border uppercase tracking-widest hover:bg-muted transition-all"
                 onClick={() => {
-                  handleAddToCart();
-                  navigate('/customer/checkout');
+                  navigate('/customer/checkout', {
+                    state: {
+                      items: [{
+                        productId: product.id,
+                        quantity,
+                        productName: product.name,
+                        price: product.price,
+                        imageUrl: product.imageUrl
+                      }],
+                      fromCart: false
+                    }
+                  });
                 }}
-                disabled={isAdding || product.stock === 0}
+                disabled={product.stock === 0 || product.status === ProductStatus.DISCONTINUED}
               >
                 Buy Now
               </Button>

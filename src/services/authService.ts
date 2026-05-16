@@ -26,9 +26,9 @@ interface UserMeResponseDto {
 // BE returns roles as ["Customer"], ["Staff"], ["Admin"], etc.
 // FE expects a single UserRole string.
 const mapRole = (roles: string[]): UserRole => {
-  if (roles.includes('Admin')) return 'TechnicalAdmin';
+  if (roles.includes('Admin')) return 'Technical Admin';
   if (roles.includes('Staff')) return 'Staff';
-  if (roles.includes('BusinessAdmin')) return 'BusinessAdmin';
+  if (roles.includes('Business Admin')) return 'Business Admin';
   return 'Customer';
 };
 

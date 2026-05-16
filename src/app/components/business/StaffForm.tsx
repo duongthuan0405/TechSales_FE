@@ -25,7 +25,7 @@ const staffSchema = z.object({
   fullName: z.string().min(2, "Full name must be at least 2 characters"),
   email: z.string().email("Invalid email address"),
   phone: z.string().min(10, "Phone number must be at least 10 digits"),
-  role: z.enum(['Staff', 'BusinessAdmin', 'TechnicalAdmin']),
+  role: z.enum(['Staff', 'Business Admin', 'Technical Admin']),
   status: z.nativeEnum(UserStatus),
 });
 
@@ -109,8 +109,8 @@ export function StaffForm({ initialData, onSubmit, isLoading }: StaffFormProps) 
                   </FormControl>
                   <SelectContent>
                     <SelectItem value="Staff">Sales Staff</SelectItem>
-                    <SelectItem value="BusinessAdmin">Business Admin</SelectItem>
-                    <SelectItem value="TechnicalAdmin">Technical Admin</SelectItem>
+                    <SelectItem value="Business Admin">Business Admin</SelectItem>
+                    <SelectItem value="Technical Admin">Technical Admin</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />

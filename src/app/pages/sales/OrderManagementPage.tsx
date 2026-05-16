@@ -12,7 +12,7 @@ import {
   SelectValue 
 } from "../../components/ui/select";
 import { Search, Eye, Loader2, CheckCircle2, XCircle, Truck, Package, AlertTriangle } from 'lucide-react';
-import { useGetOrders, useUpdateOrderStatus } from '../../../dataHook/orderDataHook';
+import { useGetAdminOrders, useUpdateOrderStatus } from '../../../dataHook/orderDataHook';
 import { OrderStatus } from '../../../models/ui_types/order';
 import { useNavigate } from 'react-router';
 import { toast } from 'sonner';
@@ -29,7 +29,7 @@ import {
 
 export function OrderManagementPage() {
   const navigate = useNavigate();
-  const { data: orders = [], isLoading } = useGetOrders();
+  const { data: orders = [], isLoading } = useGetAdminOrders();
   const { mutate: updateStatus } = useUpdateOrderStatus();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -160,6 +160,7 @@ export function OrderManagementPage() {
                   <TableHead className="font-bold uppercase tracking-widest text-[10px] text-muted-foreground">Customer</TableHead>
                   <TableHead className="font-bold uppercase tracking-widest text-[10px] text-muted-foreground text-center">Items</TableHead>
                   <TableHead className="font-bold uppercase tracking-widest text-[10px] text-muted-foreground">Status</TableHead>
+                  <TableHead className="font-bold uppercase tracking-widest text-[10px] text-muted-foreground">Payment</TableHead>
                   <TableHead className="font-bold uppercase tracking-widest text-[10px] text-muted-foreground text-right">Total</TableHead>
                   <TableHead className="font-bold uppercase tracking-widest text-[10px] text-muted-foreground text-right">Quick Actions</TableHead>
                 </TableRow>
@@ -185,6 +186,14 @@ export function OrderManagementPage() {
                       <Badge variant={getStatusVariant(order.status)} className="text-[9px] font-black uppercase tracking-wider px-2.5 py-1">
                         {order.status}
                       </Badge>
+                    </TableCell>
+                    <TableCell className="py-4">
+                      <div className="flex flex-col">
+                        <span className="font-bold text-[10px] uppercase">{order.paymentMethodName || 'N/A'}</span>
+                        <span className={`text-[9px] font-bold uppercase ${order.paymentStatus === 2 ? 'text-green-500' : order.paymentStatus === 1 ? 'text-yellow-500' : 'text-red-500'}`}>
+                          {order.paymentStatus === 2 ? 'PAID' : order.paymentStatus === 1 ? 'PENDING' : 'FAILED'}
+                        </span>
+                      </div>
                     </TableCell>
                     <TableCell className="text-right font-black text-sm py-4">${order.totalAmount.toLocaleString()}</TableCell>
                     <TableCell className="text-right py-4" onClick={(e) => e.stopPropagation()}>

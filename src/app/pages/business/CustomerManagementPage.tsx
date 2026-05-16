@@ -120,7 +120,7 @@ export function CustomerManagementPage() {
   const handleToggleStatus = (user: User, e?: React.MouseEvent) => {
     e?.stopPropagation();
     
-    toggleStatusMutation.mutate(user.id, {
+    toggleStatusMutation.mutate({ id: user.id, status: user.status }, {
       onSuccess: (updated) => {
         const isBlocked = updated.status === UserStatus.BLOCKED;
         toast.success(`Account ${isBlocked ? 'blocked' : 'activated'} successfully`);
@@ -238,7 +238,7 @@ export function CustomerManagementPage() {
                           onClick={(e) => handleToggleStatus(user, e)}
                           disabled={toggleStatusMutation.isPending}
                         >
-                          {toggleStatusMutation.isPending && toggleStatusMutation.variables === user.id ? (
+                          {toggleStatusMutation.isPending && (toggleStatusMutation.variables as any)?.id === user.id ? (
                              <Loader2 className="h-4 w-4 animate-spin" />
                           ) : user.status === UserStatus.BLOCKED ? (
                             <UserCheck className="h-4 w-4 text-success" />

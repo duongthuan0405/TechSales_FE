@@ -32,7 +32,7 @@ export function ShoppingCartPage() {
   }, [isError]);
 
   const handleCheckout = () => {
-    navigate('/customer/checkout');
+    navigate('/customer/checkout', { state: { items: cartItems, fromCart: true } });
   };
 
   const handleUpdateQuantity = (productId: string, quantity: number) => {

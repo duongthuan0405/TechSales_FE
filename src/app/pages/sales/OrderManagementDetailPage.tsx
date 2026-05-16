@@ -15,7 +15,7 @@ import {
   History,
   AlertTriangle
 } from 'lucide-react';
-import { useGetOrder, useUpdateOrderStatus } from '../../../dataHook/orderDataHook';
+import { useGetAdminOrder, useUpdateOrderStatus } from '../../../dataHook/orderDataHook';
 import { OrderStatus } from '../../../models/ui_types/order';
 import { toast } from 'sonner';
 import { Button } from '../../components/ui/button';
@@ -40,7 +40,7 @@ interface OrderManagementDetailPageProps {
 export function OrderManagementDetailPage({ readOnly = false }: OrderManagementDetailPageProps) {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { data: order, isLoading } = useGetOrder(id || '');
+  const { data: order, isLoading } = useGetAdminOrder(id || '');
   const { mutate: updateStatus, isPending: isUpdating } = useUpdateOrderStatus();
 
   // Confirmation State

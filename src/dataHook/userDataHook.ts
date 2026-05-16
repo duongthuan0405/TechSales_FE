@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { userService } from '../services/userService';
-import { User, UserRole } from '../models/ui_types/user';
+import { User, UserRole, UserStatus } from '../models/ui_types/user';
 
 export const useGetUsers = () => {
   return useQuery({
@@ -56,7 +56,7 @@ export const useUpdateUser = () => {
 export const useToggleUserStatus = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => userService.toggleUserStatus(id),
+    mutationFn: ({ id, status }: { id: string; status: UserStatus }) => userService.toggleUserStatus(id, status),
     onSuccess: (updated) => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
       queryClient.invalidateQueries({ queryKey: ['user', updated.id] });
@@ -64,12 +64,4 @@ export const useToggleUserStatus = () => {
   });
 };
 
-export const useDeleteUser = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (id: string) => userService.deleteUser(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['users'] });
-    },
-  });
-};
+

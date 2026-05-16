@@ -8,10 +8,25 @@ export const useGetOrders = () => {
   });
 };
 
+export const useGetAdminOrders = () => {
+  return useQuery({
+    queryKey: ['admin-orders'],
+    queryFn: () => orderService.getAdminOrders(),
+  });
+};
+
 export const useGetOrder = (id: string) => {
   return useQuery({
     queryKey: ['orders', id],
     queryFn: () => orderService.getOrderById(id),
+    enabled: !!id,
+  });
+};
+
+export const useGetAdminOrder = (id: string) => {
+  return useQuery({
+    queryKey: ['admin-orders', id],
+    queryFn: () => orderService.getOrderStaffDetail(id),
     enabled: !!id,
   });
 };
@@ -44,6 +59,7 @@ export const useCancelOrder = () => {
     },
   });
 };
+
 export const useUpdateOrderStatus = () => {
   const queryClient = useQueryClient();
   return useMutation({
@@ -51,7 +67,9 @@ export const useUpdateOrderStatus = () => {
       orderService.updateOrderStatus(id, status),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-orders'] });
       queryClient.invalidateQueries({ queryKey: ['orders', variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['admin-orders', variables.id] });
     },
   });
 };

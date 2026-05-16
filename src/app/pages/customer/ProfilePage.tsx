@@ -1,22 +1,53 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { useAuth } from '../../context/AuthContext';
-import { User, Mail, Phone, Camera, Save, Loader2, ShieldCheck } from 'lucide-react';
+import { userService } from '../../../services/userService';
+import { User as UserIcon, Mail, Phone, Camera, Save, Loader2, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 
 export function ProfilePage() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, setAuthUser } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: user?.name || '',
     email: user?.email || '',
-    phone: '0987654321', // Mock data
+    phone: user?.phone || '',
   });
+
+  useEffect(() => {
+    // Fetch latest user data to ensure phone number is up to date
+    const fetchLatestData = async () => {
+      try {
+        const latestUser = await userService.getUserById(user?.id || '');
+        setFormData({
+          name: latestUser.fullName,
+          email: latestUser.email,
+          phone: latestUser.phone,
+        });
+        
+        // Update context if data changed
+        if (latestUser.fullName !== user?.name || latestUser.phone !== user?.phone) {
+          setAuthUser({
+            ...user!,
+            name: latestUser.fullName,
+            phone: latestUser.phone,
+            avatarUrl: latestUser.avatarUrl
+          });
+        }
+      } catch (error) {
+        console.error('Failed to fetch latest user data', error);
+      }
+    };
+
+    if (user?.id) {
+      fetchLatestData();
+    }
+  }, [user?.id]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({ ...prev, [e.target.id]: e.target.value }));
@@ -24,10 +55,33 @@ export function ProfilePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!formData.name) {
+      toast.error('Full name is required');
+      return;
+    }
+
     setIsLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    setIsLoading(false);
-    toast.success('Profile updated successfully');
+    try {
+      await userService.updateProfile({
+        fullName: formData.name,
+        phone: formData.phone
+      });
+      
+      // Update local auth context
+      if (user) {
+        setAuthUser({
+          ...user,
+          name: formData.name,
+          phone: formData.phone
+        });
+      }
+      
+      toast.success('Profile updated successfully');
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to update profile');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -43,7 +97,7 @@ export function ProfilePage() {
           <CardContent className="pt-10 pb-6 flex flex-col items-center">
             <div className="relative group cursor-pointer">
               <div className="h-28 w-28 rounded-full border border-border bg-muted/30 flex items-center justify-center overflow-hidden transition-all group-hover:border-primary">
-                <User className="h-14 w-14 text-muted-foreground/50" />
+                <UserIcon className="h-14 w-14 text-muted-foreground/50" />
               </div>
               <div className="absolute bottom-0 right-0 h-9 w-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-md transition-transform group-hover:scale-110 border-2 border-card">
                 <Camera className="h-4 w-4" />

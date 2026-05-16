@@ -50,6 +50,17 @@ interface OrderStaffDetailDto extends OrderDetailDto {
   }[];
 }
 
+interface OrderAdminSummaryDto {
+  orderId: string;
+  customerEmail: string;
+  customerName: string;
+  status: OrderStatus;
+  totalAmount: number;
+  createdAt: string;
+  paymentMethodName: string;
+  paymentStatus: number;
+}
+
 // ─── Mapping ────────────────────────────────────────────────
 const mapOrder = (dto: OrderResponseDto): Order => ({
   id: dto.id,
@@ -88,6 +99,21 @@ const mapStaffOrder = (dto: OrderStaffDto): Order => ({
   customerName: dto.customerName,
 });
 
+const mapAdminOrder = (dto: OrderAdminSummaryDto): Order => ({
+  id: dto.orderId,
+  userId: '',
+  status: dto.status,
+  totalProductAmount: 0,
+  shippingFee: 0,
+  discountAmount: 0,
+  totalAmount: dto.totalAmount,
+  shippingAddressSnapshot: '',
+  createdAt: dto.createdAt,
+  customerName: dto.customerName,
+  paymentMethodName: dto.paymentMethodName,
+  paymentStatus: dto.paymentStatus,
+});
+
 // ─── Public Interfaces ──────────────────────────────────────
 export interface CheckoutPreviewParams {
   items: { productId: string; quantity: number }[];
@@ -111,8 +137,15 @@ export const orderService = {
   },
 
   getOrderById: async (id: string): Promise<Order> => {
-    const dto = await api.get<OrderDetailDto>(`/order/${id}`);
-    return mapOrderDetail(dto);
+    const dto = await api.get<OrderStaffDetailDto>(`/order/${id}`);
+    const order = mapOrderDetail(dto);
+    if (dto.payments && dto.payments.length > 0) {
+      order.paymentMethodName = dto.payments[0].paymentMethodName;
+      order.paymentStatus = typeof dto.payments[0].status === 'number' 
+        ? dto.payments[0].status 
+        : (dto.payments[0].status as any === 'SUCCESS' ? 2 : dto.payments[0].status as any === 'FAILED' ? 3 : 1);
+    }
+    return order;
   },
 
   calculateCheckoutSummary: async (params: CheckoutPreviewParams): Promise<CheckoutSummary> => {
@@ -189,6 +222,19 @@ export const orderService = {
     const dto = await api.get<OrderStaffDetailDto>(`/order/${id}/staff`);
     const order = mapOrderDetail(dto);
     order.customerName = dto.customerFullName;
+    
+    if (dto.payments && dto.payments.length > 0) {
+      order.paymentMethodName = dto.payments[0].paymentMethodName;
+      // Map string status to number status if needed or just leave as is, since UI enum logic
+      // But Order UI model expects number for paymentStatus from our previous update. 
+      // Actually backend Payment enum: PENDING = 1, SUCCESS = 2, FAILED = 3
+      // dto.payments[0].status might be integer or string depending on BE configuration.
+      // Assuming BE returns integer or we parse it:
+      order.paymentStatus = typeof dto.payments[0].status === 'number' 
+        ? dto.payments[0].status 
+        : (dto.payments[0].status as any === 'SUCCESS' ? 2 : dto.payments[0].status as any === 'FAILED' ? 3 : 1);
+    }
+    
     return order;
   },
 
@@ -218,5 +264,12 @@ export const orderService = {
 
   initiateRefund: async (id: string): Promise<void> => {
     await api.post(`/order/${id}/refund`);
+  },
+
+  getAdminOrders: async (pageNumber = 1, pageSize = 20): Promise<Order[]> => {
+    const paged = await api.get<PagedResponse<OrderAdminSummaryDto>>(
+      `/admin/orders?pageNumber=${pageNumber}&pageSize=${pageSize}`,
+    );
+    return paged.items.map(mapAdminOrder);
   },
 };

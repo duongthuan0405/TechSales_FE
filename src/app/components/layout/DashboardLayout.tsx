@@ -3,7 +3,7 @@ import { Sidebar } from './Sidebar';
 import { TopNav } from './TopNav';
 
 interface DashboardLayoutProps {
-  role: 'Customer' | 'Staff' | 'BusinessAdmin' | 'TechnicalAdmin';
+  role: 'Customer' | 'Staff' | 'Business Admin' | 'Technical Admin';
   userName: string;
   userRole: string;
   onLogout: () => void;

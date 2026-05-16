@@ -25,6 +25,7 @@ import { BusinessDashboardPage } from './pages/business/BusinessDashboardPage';
 import { ProductManagementPage } from './pages/business/ProductManagementPage';
 import { CategoryManagementPage } from './pages/business/CategoryManagementPage';
 import { ReportsPage } from './pages/business/ReportsPage';
+import { VoucherManagementPage } from './pages/business/VoucherManagementPage';
 import { TechnicalDashboardPage } from './pages/technical/TechnicalDashboardPage';
 import { UserManagementPage } from './pages/technical/UserManagementPage';
 import { Button } from './components/ui/button';
@@ -63,16 +64,16 @@ function AppContent() {
   const roleBasedDefaultPath: Record<string, string> = {
     Customer: '/customer',
     Staff: '/sales',
-    BusinessAdmin: '/business',
-    TechnicalAdmin: '/technical',
+    'Business Admin': '/business',
+    'Technical Admin': '/technical',
   };
 
   const getRoleDisplayName = (role: string) => {
     const roleNames: Record<string, string> = {
       Customer: 'Customer',
       Staff: 'Staff',
-      BusinessAdmin: 'Business Admin',
-      TechnicalAdmin: 'Technical Admin',
+      'Business Admin': 'Business Admin',
+      'Technical Admin': 'Technical Admin',
     };
     return roleNames[role] || role;
   };
@@ -121,7 +122,7 @@ function AppContent() {
         )}
 
         {/* Business Routes */}
-        {user.role === 'BusinessAdmin' && (
+        {user.role === 'Business Admin' && (
           <>
             <Route path="/business" element={<BusinessDashboardPage />} />
             <Route path="/business/products" element={<ProductManagementPage />} />
@@ -129,6 +130,7 @@ function AppContent() {
             <Route path="/business/products/:id" element={<StaffProductDetailPage />} />
             <Route path="/business/customers" element={<CustomerManagementPage />} />
             <Route path="/business/staff" element={<StaffManagementPage />} />
+            <Route path="/business/vouchers" element={<VoucherManagementPage />} />
             <Route path="/business/reports" element={<ReportsPage />} />
             <Route path="/business/orders/:id" element={<OrderManagementDetailPage readOnly={true} />} />
             <Route path="/business/profile" element={<ProfilePage />} />
@@ -136,7 +138,7 @@ function AppContent() {
         )}
 
         {/* Technical Routes */}
-        {user.role === 'TechnicalAdmin' && (
+        {user.role === 'Technical Admin' && (
           <>
             <Route path="/technical" element={<TechnicalDashboardPage />} />
             <Route path="/technical/users" element={<UserManagementPage />} />

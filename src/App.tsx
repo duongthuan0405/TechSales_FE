@@ -60,7 +60,7 @@ function AppContent() {
             <Route path="/" element={<Navigate to={
               user.role === 'Customer' ? '/customer' : 
               user.role === 'Staff' ? '/sales' : 
-              user.role === 'BusinessAdmin' ? '/business' : 
+              user.role === 'Business Admin' ? '/business' : 
               '/technical'
             } replace />} />
 
@@ -94,14 +94,14 @@ function AppContent() {
             )}
 
             {/* Business Routes */}
-            {user.role === 'BusinessAdmin' && (
+            {user.role === 'Business Admin' && (
               <>
-                <Route path="/business" element={<SalesDashboardPage />} />
+                <Route path="/business" element={<BusinessDashboardPage />} />
                 <Route path="/business/products" element={<ProductManagementPage />} />
               </>
             )}
 
-            {user.role === 'TechnicalAdmin' && (
+            {user.role === 'Technical Admin' && (
               <>
                 <Route path="/technical" element={<TechnicalDashboardPage />} />
                 <Route path="/technical/users" element={<UserManagementPage />} />

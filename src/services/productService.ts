@@ -16,6 +16,10 @@ interface ProductResponseDto {
   brand: string;
   categoryId: string;
   images: ProductImageDto[];
+  stockStatus: string;
+  availableQuantity: number;
+  status: ProductStatus;
+  rating: number;
 }
 
 interface ProductDetailDto extends ProductResponseDto {
@@ -33,15 +37,14 @@ const mapProduct = (dto: ProductResponseDto): Product => ({
   categoryId: dto.categoryId,
   imageUrl: dto.images?.find(img => img.isPrimary)?.imageUrl || dto.images?.[0]?.imageUrl,
   images: dto.images?.map(img => img.imageUrl),
-  stock: 0,  // Not available in list response
-  status: ProductStatus.ACTIVE,
+  stock: dto.availableQuantity,
+  status: dto.status,
+  rating: dto.rating,
   createdAt: '',
 });
 
 const mapProductDetail = (dto: ProductDetailDto): Product => ({
   ...mapProduct(dto),
-  stock: dto.availableQuantity,
-  status: dto.stockStatus === 'OUT_OF_STOCK' ? ProductStatus.DISCONTINUED : ProductStatus.ACTIVE,
 });
 
 // ─── Public Interface (signatures kept compatible) ──────────
@@ -105,6 +108,25 @@ export const productService = {
     return result;
   },
 
+  getAdminProducts: async (params?: { keyword?: string; categoryId?: string; status?: ProductStatus; pageNumber?: number; pageSize?: number }): Promise<{ items: Product[], totalCount: number }> => {
+    const query = new URLSearchParams();
+    if (params?.keyword) query.set('keyword', params.keyword);
+    if (params?.categoryId) query.set('categoryId', params.categoryId);
+    if (params?.status) query.set('status', params.status);
+    if (params?.pageNumber) query.set('pageNumber', params.pageNumber.toString());
+    if (params?.pageSize) query.set('pageSize', params.pageSize.toString());
+
+    const queryStr = query.toString();
+    const response = await api.get<{ items: ProductResponseDto[], totalCount: number }>(
+      `/admin/products${queryStr ? `?${queryStr}` : ''}`,
+    );
+
+    return {
+      items: response.items.map(mapProduct),
+      totalCount: response.totalCount
+    };
+  },
+
   getProductById: async (id: string): Promise<Product> => {
     const dto = await api.get<ProductDetailDto>(`/product/${id}`);
     return mapProductDetail(dto);
@@ -157,6 +179,17 @@ export const productService = {
 
   toggleProductDiscontinue: async (id: string): Promise<Product> => {
     await api.patch(`/admin/products/${id}/status`);
-    return productService.getProductById(id);
+    // Return a dummy object with the updated status to satisfy the mutation signature
+    // and avoid calling the public GET endpoint which would return 404 for discontinued products.
+    return {
+      id,
+      status: ProductStatus.DISCONTINUED,
+    } as Product;
+  },
+  updateInventory: async (id: string, value: number, type: 'ADD' | 'SET'): Promise<void> => {
+    await api.patch(`/admin/products/${id}/inventory`, {
+      value,
+      type: type === 'ADD' ? 1 : 2 // Map to BE enum values
+    });
   },
 };
