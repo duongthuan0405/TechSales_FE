@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { AuthUser, UserRole } from '../models/ui_types/user';
+import { authService } from '../services/authService';
 
 interface AuthContextType {
   user: AuthUser | null;
@@ -15,17 +16,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load user from localStorage on init
+  // On init: try to restore session from JWT token
   useEffect(() => {
-    const savedUser = localStorage.getItem('tech_sales_user');
-    if (savedUser) {
+    const restoreSession = async () => {
       try {
-        setUser(JSON.parse(savedUser));
-      } catch (e) {
+        const currentUser = await authService.getCurrentUser();
+        setUser(currentUser);
+      } catch {
+        // Token invalid or network error — start fresh
+        localStorage.removeItem('token');
         localStorage.removeItem('tech_sales_user');
+      } finally {
+        setIsLoading(false);
       }
-    }
-    setIsLoading(false);
+    };
+
+    restoreSession();
   }, []);
 
   const setAuthUser = (newUser: AuthUser | null) => {
@@ -38,7 +44,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = () => {
-    setAuthUser(null);
+    setUser(null);
+    localStorage.removeItem('token');
+    localStorage.removeItem('tech_sales_user');
   };
 
   const switchRole = (role: UserRole) => {

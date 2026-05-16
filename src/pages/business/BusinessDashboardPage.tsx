@@ -1,14 +1,26 @@
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { StatsCard } from '../../components/analytics/StatsCard';
-import { salesData, categoryData, products } from '../../data/mockData';
+import { dashboardService } from '../../services/dashboardService';
+import { productService } from '../../services/productService';
+import { DashboardStats, SalesData, CategoryData } from '../../models/ui_types/dashboard';
 import { DollarSign, Package, ShoppingCart, TrendingUp } from 'lucide-react';
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
 export function BusinessDashboardPage() {
-  const totalProducts = products.length;
-  const totalRevenue = 328000;
-  const totalOrders = 1778;
-  const avgOrderValue = totalRevenue / totalOrders;
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [totalProducts, setTotalProducts] = useState(0);
+
+  useEffect(() => {
+    dashboardService.getSalesStats().then(setStats).catch(() => {});
+    productService.getProducts().then(p => setTotalProducts(p.length)).catch(() => {});
+  }, []);
+
+  const totalRevenue = stats?.totalRevenue || 0;
+  const totalOrders = stats?.totalOrders || 0;
+  const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+  const salesData: SalesData[] = stats?.revenueTrend || [];
+  const categoryData: CategoryData[] = stats?.categoryDistribution || [];
 
   const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 

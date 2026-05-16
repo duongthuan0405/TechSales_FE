@@ -1,59 +1,41 @@
-import { categories, products } from '../data/mockData';
+import api from '../api/apiClient';
 import { Category } from '../models/ui_types/category';
 
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+// ─── BE returns Category entity directly ────────────────────
+interface CategoryDto {
+  id: string;
+  name: string;
+  parentId?: string;
+  createdAt?: string;
+}
+
+const mapCategory = (dto: CategoryDto): Category => ({
+  id: dto.id,
+  name: dto.name,
+  parentId: dto.parentId,
+  createdAt: dto.createdAt,
+});
 
 export const categoryService = {
   getCategories: async (): Promise<Category[]> => {
-    await delay(700);
-    return [...categories];
+    const categories = await api.get<CategoryDto[]>('/Category');
+    return categories.map(mapCategory);
   },
 
   createCategory: async (data: Omit<Category, 'id'>): Promise<Category> => {
-    await delay(1000);
-    const newCategory: Category = {
-      ...data,
-      id: `CAT${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`,
-    };
-    categories.push(newCategory);
-    return newCategory;
+    await api.post('/Category', { name: data.name });
+    // BE doesn't return the created category, refetch
+    const categories = await categoryService.getCategories();
+    return categories[categories.length - 1];
   },
 
   updateCategory: async (id: string, data: Partial<Category>): Promise<Category> => {
-    await delay(1000);
-    const index = categories.findIndex(c => c.id === id);
-    if (index === -1) throw new Error('Category not found');
-    
-    // If name changes, we should ideally update product categoryNames too if they are stored as strings
-    const oldName = categories[index].name;
-    categories[index] = { ...categories[index], ...data };
-    
-    if (data.name && data.name !== oldName) {
-      products.forEach(p => {
-        if (p.categoryId === id) p.categoryName = data.name;
-      });
-    }
-    
-    return categories[index];
+    // BE doesn't have an update endpoint
+    // For now, throw a meaningful error
+    throw new Error(`Update category is not supported by the server. Category ID: ${id}, Name: ${data.name}`);
   },
 
   deleteCategory: async (id: string, replacementId: string): Promise<void> => {
-    await delay(1200);
-    const index = categories.findIndex(c => c.id === id);
-    if (index === -1) throw new Error('Category not found');
-    
-    const replacement = categories.find(c => c.id === replacementId);
-    if (!replacement) throw new Error('Replacement category not found');
-
-    // Update all products belonging to the deleted category
-    products.forEach(p => {
-      if (p.categoryId === id) {
-        p.categoryId = replacementId;
-        p.categoryName = replacement.name;
-      }
-    });
-
-    // Remove the category
-    categories.splice(index, 1);
-  }
+    await api.delete(`/Category/${id}?replacementCategoryId=${replacementId}`);
+  },
 };

@@ -1,7 +1,50 @@
-import { products } from '../data/mockData';
+import api from '../api/apiClient';
 import { Product, ProductStatus } from '../models/ui_types/product';
-import { delay } from '../app/utils/delay';
 
+// ─── BE Response Types ──────────────────────────────────────
+interface ProductImageDto {
+  id: string;
+  imageUrl: string;
+  isPrimary: boolean;
+}
+
+interface ProductResponseDto {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  brand: string;
+  categoryId: string;
+  images: ProductImageDto[];
+}
+
+interface ProductDetailDto extends ProductResponseDto {
+  stockStatus: string;
+  availableQuantity: number;
+}
+
+// ─── Mapping BE → FE ────────────────────────────────────────
+const mapProduct = (dto: ProductResponseDto): Product => ({
+  id: dto.id,
+  name: dto.name,
+  description: dto.description,
+  price: dto.price,
+  brand: dto.brand,
+  categoryId: dto.categoryId,
+  imageUrl: dto.images?.find(img => img.isPrimary)?.imageUrl || dto.images?.[0]?.imageUrl,
+  images: dto.images?.map(img => img.imageUrl),
+  stock: 0,  // Not available in list response
+  status: ProductStatus.ACTIVE,
+  createdAt: '',
+});
+
+const mapProductDetail = (dto: ProductDetailDto): Product => ({
+  ...mapProduct(dto),
+  stock: dto.availableQuantity,
+  status: dto.stockStatus === 'OUT_OF_STOCK' ? ProductStatus.DISCONTINUED : ProductStatus.ACTIVE,
+});
+
+// ─── Public Interface (signatures kept compatible) ──────────
 export interface ProductQueryParams {
   search?: string;
   category?: string;
@@ -14,56 +57,44 @@ export interface ProductQueryParams {
 
 export const productService = {
   getProducts: async (params?: ProductQueryParams): Promise<Product[]> => {
-    await delay(800); // Simulate network lag
-    let result = [...products];
+    const query = new URLSearchParams();
 
-    // Filter by Search
-    if (params?.search) {
-      const search = params.search.toLowerCase();
-      result = result.filter(p => 
-        p.name.toLowerCase().includes(search) || 
-        p.brand?.toLowerCase().includes(search) ||
-        p.description?.toLowerCase().includes(search)
-      );
-    }
-
-    // Filter by Category
+    if (params?.search) query.set('keyword', params.search);
     if (params?.category && params.category !== 'all') {
-      result = result.filter(p => p.categoryName === params.category);
+      query.append('categoryIds', params.category);
+    }
+    if (params?.sortBy) {
+      // Map FE sort to BE SortOrder enum (ASC=1, DESC=2)
+      // Note: BE only supports price sorting via ASC/DESC in SearchProductsAsync
+      const sortMap: Record<string, string> = {
+        price_asc: 'ASC',
+        price_desc: 'DESC',
+      };
+      
+      const mappedSort = sortMap[params.sortBy];
+      if (mappedSort) {
+        query.set('sortOrder', mappedSort);
+      }
     }
 
-    // Filter by Price Range
+    const queryStr = query.toString();
+    const products = await api.get<ProductResponseDto[]>(
+      `/product${queryStr ? `?${queryStr}` : ''}`,
+    );
+
+    let result = products.map(mapProduct);
+
+    // Client-side filtering for params not supported by BE
     if (params?.minPrice !== undefined) {
       result = result.filter(p => p.price >= params.minPrice!);
     }
     if (params?.maxPrice !== undefined && params.maxPrice > 0) {
       result = result.filter(p => p.price <= params.maxPrice!);
     }
-
-    // Filter by Brand
     if (params?.brand && params.brand !== 'all') {
       const brandQuery = params.brand.toLowerCase();
       result = result.filter(p => p.brand?.toLowerCase().includes(brandQuery));
     }
-
-    // Sorting
-    if (params?.sortBy) {
-      switch (params.sortBy) {
-        case 'price_asc':
-          result.sort((a, b) => a.price - b.price);
-          break;
-        case 'price_desc':
-          result.sort((a, b) => b.price - a.price);
-          break;
-        case 'rating':
-          result.sort((a, b) => (b.rating || 0) - (a.rating || 0));
-          break;
-        case 'newest':
-          result.sort((a, b) => new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime());
-          break;
-      }
-    }
-
     if (params?.limit) {
       result = result.slice(0, params.limit);
     }
@@ -72,59 +103,57 @@ export const productService = {
   },
 
   getProductById: async (id: string): Promise<Product> => {
-    await delay(500);
-    const product = products.find((p: Product) => p.id === id);
-    if (!product) throw new Error('Product not found');
-    return { ...product };
+    const dto = await api.get<ProductDetailDto>(`/product/${id}`);
+    return mapProductDetail(dto);
   },
 
   getAllBrands: async (): Promise<string[]> => {
-    await delay(300);
-    const brands = products.map(p => p.brand).filter((b): b is string => !!b);
+    // BE doesn't have a dedicated brands endpoint
+    // Derive from product list
+    const products = await api.get<ProductResponseDto[]>('/product');
+    const brands = products.map(p => p.brand).filter(Boolean);
     return Array.from(new Set(brands));
   },
 
   createProduct: async (product: Omit<Product, 'id' | 'createdAt'>): Promise<Product> => {
-    await delay(1000);
-    const newProduct: Product = {
-      ...product,
-      id: `P${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`,
-      createdAt: new Date().toISOString(),
-    };
-    products.unshift(newProduct);
-    return newProduct;
+    const result = await api.post<ProductResponseDto>('/admin/products', {
+      name: product.name,
+      description: product.description,
+      price: product.price,
+      brand: product.brand,
+      categoryId: product.categoryId,
+      initialStock: product.stock || 0,
+      images: product.images?.map((url, i) => ({
+        imageUrl: url,
+        isPrimary: i === 0,
+      })) || [],
+    });
+    return mapProduct(result);
   },
 
   updateProduct: async (id: string, productData: Partial<Product>): Promise<Product> => {
-    await delay(1000);
-    const index = products.findIndex(p => p.id === id);
-    if (index === -1) throw new Error('Product not found');
-    
-    products[index] = {
-      ...products[index],
-      ...productData,
-      updatedAt: new Date().toISOString(),
-    };
-    return products[index];
+    await api.put(`/admin/products/${id}`, {
+      name: productData.name,
+      description: productData.description,
+      price: productData.price,
+      brand: productData.brand,
+      categoryId: productData.categoryId,
+      images: productData.images?.map((url, i) => ({
+        imageUrl: url,
+        isPrimary: i === 0,
+      })) || [],
+    });
+    // Refetch to get updated product
+    return productService.getProductById(id);
   },
 
   deleteProduct: async (id: string): Promise<void> => {
-    await delay(800);
-    const index = products.findIndex(p => p.id === id);
-    if (index === -1) throw new Error('Product not found');
-    products.splice(index, 1);
+    // BE only supports discontinue, not delete
+    await api.patch(`/admin/products/${id}/status`);
   },
 
   toggleProductDiscontinue: async (id: string): Promise<Product> => {
-    await delay(1000);
-    const index = products.findIndex(p => p.id === id);
-    if (index === -1) throw new Error('Product not found');
-    
-    products[index].status = products[index].status === ProductStatus.DISCONTINUED 
-      ? ProductStatus.ACTIVE 
-      : ProductStatus.DISCONTINUED;
-      
-    products[index].updatedAt = new Date().toISOString();
-    return { ...products[index] };
-  }
+    await api.patch(`/admin/products/${id}/status`);
+    return productService.getProductById(id);
+  },
 };

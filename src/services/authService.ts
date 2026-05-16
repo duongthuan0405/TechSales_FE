@@ -1,8 +1,38 @@
-import { users } from '../data/mockData';
+import api from '../api/apiClient';
 import { AuthUser, UserRole } from '../models/ui_types/user';
 
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+// ─── Types matching BE DTOs ─────────────────────────────────
+interface LoginResponseDto {
+  token: string;
+  email: string;
+  roles: string[];
+}
 
+interface UserMeResponseDto {
+  id: string;
+  email: string;
+  status: string;
+  createdAt: string;
+  roles: string[];
+  profile: {
+    fullName: string;
+    phone: string;
+    avatarUrl?: string;
+    dateOfBirth?: string;
+  } | null;
+}
+
+// ─── Role Mapping ───────────────────────────────────────────
+// BE returns roles as ["Customer"], ["Staff"], ["Admin"], etc.
+// FE expects a single UserRole string.
+const mapRole = (roles: string[]): UserRole => {
+  if (roles.includes('Admin')) return 'TechnicalAdmin';
+  if (roles.includes('Staff')) return 'Staff';
+  if (roles.includes('BusinessAdmin')) return 'BusinessAdmin';
+  return 'Customer';
+};
+
+// ─── Public Interfaces (unchanged signatures) ───────────────
 export interface LoginParams {
   email: string;
   password?: string;
@@ -17,26 +47,36 @@ export interface RegisterParams {
 
 export const authService = {
   login: async ({ email, password }: LoginParams): Promise<AuthUser> => {
-    await delay(1000);
-    const foundUser = users.find(u => u.email === email && (u.password === password || !password));
-    
-    if (!foundUser) {
-      throw new Error('Invalid credentials');
-    }
+    const data = await api.post<LoginResponseDto>('/auth/login', {
+      email,
+      password,
+    });
+
+    // Save JWT token for subsequent API calls
+    localStorage.setItem('token', data.token);
+
+    // Fetch full user profile to get id and name
+    const userMe = await api.get<UserMeResponseDto>('/user/me');
 
     return {
-      id: foundUser.id,
-      name: foundUser.fullName,
-      email: foundUser.email,
-      role: foundUser.role as UserRole,
+      id: userMe.id,
+      name: userMe.profile?.fullName || userMe.email,
+      email: userMe.email,
+      role: mapRole(userMe.roles),
     };
   },
 
   register: async (params: RegisterParams): Promise<AuthUser> => {
-    await delay(1500);
-    // Simulate server creating a user
+    await api.post('/auth/register', {
+      email: params.email,
+      password: params.password,
+      confirmPassword: params.password,
+    });
+
+    // After registration, auto-login is not guaranteed (email verification may be needed)
+    // Return a temporary user object; FE should redirect to verify-email page
     return {
-      id: `u${Math.floor(Math.random() * 1000)}`,
+      id: '',
       name: params.fullName,
       email: params.email,
       role: 'Customer',
@@ -44,24 +84,59 @@ export const authService = {
   },
 
   resetPassword: async (email: string): Promise<void> => {
-    await delay(1200);
-    console.log('Reset link sent to:', email);
+    await api.post('/auth/forgot-password', { email });
   },
 
-  confirmResetPassword: async (password: string, confirmPassword: string, token: string): Promise<void> => {
-    await delay(1500);
-    if (password !== confirmPassword) throw new Error('Passwords do not match');
-    console.log('Password reset successfully for token:', token);
+  confirmResetPassword: async (
+    password: string,
+    confirmPassword: string,
+    token: string,
+    email: string = '',
+  ): Promise<void> => {
+    await api.put('/auth/reset-password', {
+      email,
+      token,
+      newPassword: password,
+      confirmPassword,
+    });
   },
 
-  verifyEmail: async (token: string): Promise<void> => {
-    await delay(1000);
-    console.log('Email verified successfully with token:', token);
+  verifyEmail: async (token: string, email: string = ''): Promise<void> => {
+    await api.post('/auth/verify-email', { email, token });
   },
 
-  changePassword: async (oldPassword: string, newPassword: string, confirmPassword: string): Promise<void> => {
-    await delay(1200);
-    if (newPassword !== confirmPassword) throw new Error('New passwords do not match');
-    console.log('Password changed successfully');
-  }
+  changePassword: async (
+    oldPassword: string,
+    newPassword: string,
+    confirmPassword: string,
+  ): Promise<void> => {
+    await api.put('/auth/change-password', {
+      currentPassword: oldPassword,
+      newPassword,
+      confirmPassword,
+    });
+  },
+
+  /**
+   * Fetch current user from token (used by AuthContext on page load).
+   * Returns null if token is invalid/expired.
+   */
+  getCurrentUser: async (): Promise<AuthUser | null> => {
+    const token = localStorage.getItem('token');
+    if (!token) return null;
+
+    try {
+      const userMe = await api.get<UserMeResponseDto>('/user/me');
+      return {
+        id: userMe.id,
+        name: userMe.profile?.fullName || userMe.email,
+        email: userMe.email,
+        role: mapRole(userMe.roles),
+      };
+    } catch {
+      // Token expired or invalid — clean up
+      localStorage.removeItem('token');
+      return null;
+    }
+  },
 };
