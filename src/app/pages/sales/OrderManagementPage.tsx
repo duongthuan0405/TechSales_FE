@@ -190,9 +190,11 @@ export function OrderManagementPage() {
                     <TableCell className="py-4">
                       <div className="flex flex-col">
                         <span className="font-bold text-[10px] uppercase">{order.paymentMethodName || 'N/A'}</span>
-                        <span className={`text-[9px] font-bold uppercase ${order.paymentStatus === 2 ? 'text-green-500' : order.paymentStatus === 1 ? 'text-yellow-500' : 'text-red-500'}`}>
-                          {order.paymentStatus === 2 ? 'PAID' : order.paymentStatus === 1 ? 'PENDING' : 'FAILED'}
-                        </span>
+                        {order.isPaymentFailed !== null && order.isPaymentFailed !== undefined && (
+                          <span className={`text-[9px] font-bold uppercase ${order.isPaymentFailed ? 'text-red-500' : 'text-green-500'}`}>
+                            {order.isPaymentFailed ? 'FAILED' : 'PAID'}
+                          </span>
+                        )}
                       </div>
                     </TableCell>
                     <TableCell className="text-right font-black text-sm py-4">${order.totalAmount.toLocaleString()}</TableCell>

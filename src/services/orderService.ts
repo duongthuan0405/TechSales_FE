@@ -7,6 +7,8 @@ interface OrderResponseDto {
   status: OrderStatus;
   totalAmount: number;
   createdAt: string;
+  paymentMethodName?: string;
+  isPaymentFailed?: boolean | null;
 }
 
 interface OrderItemDto {
@@ -29,6 +31,8 @@ interface OrderDetailDto {
   approvedAt?: string;
   shippedAt?: string;
   deliveredAt?: string;
+  paymentMethodName?: string;
+  isPaymentFailed?: boolean | null;
   items: OrderItemDto[];
 }
 
@@ -58,7 +62,7 @@ interface OrderAdminSummaryDto {
   totalAmount: number;
   createdAt: string;
   paymentMethodName: string;
-  paymentStatus: number;
+  isPaymentFailed?: boolean | null;
 }
 
 // ─── Mapping ────────────────────────────────────────────────
@@ -72,6 +76,8 @@ const mapOrder = (dto: OrderResponseDto): Order => ({
   totalAmount: dto.totalAmount,
   shippingAddressSnapshot: '',
   createdAt: dto.createdAt,
+  paymentMethodName: dto.paymentMethodName,
+  isPaymentFailed: dto.isPaymentFailed,
 });
 
 const mapOrderDetail = (dto: OrderDetailDto): Order => ({
@@ -84,6 +90,8 @@ const mapOrderDetail = (dto: OrderDetailDto): Order => ({
   totalAmount: dto.totalAmount,
   shippingAddressSnapshot: dto.shippingAddressSnapshot,
   createdAt: dto.createdAt,
+  paymentMethodName: dto.paymentMethodName,
+  isPaymentFailed: dto.isPaymentFailed,
   items: dto.items.map(i => ({
     orderId: dto.id,
     productId: i.productId,
@@ -111,7 +119,7 @@ const mapAdminOrder = (dto: OrderAdminSummaryDto): Order => ({
   createdAt: dto.createdAt,
   customerName: dto.customerName,
   paymentMethodName: dto.paymentMethodName,
-  paymentStatus: dto.paymentStatus,
+  isPaymentFailed: dto.isPaymentFailed,
 });
 
 // ─── Public Interfaces ──────────────────────────────────────
@@ -141,9 +149,6 @@ export const orderService = {
     const order = mapOrderDetail(dto);
     if (dto.payments && dto.payments.length > 0) {
       order.paymentMethodName = dto.payments[0].paymentMethodName;
-      order.paymentStatus = typeof dto.payments[0].status === 'number' 
-        ? dto.payments[0].status 
-        : (dto.payments[0].status as any === 'SUCCESS' ? 2 : dto.payments[0].status as any === 'FAILED' ? 3 : 1);
     }
     return order;
   },
@@ -225,14 +230,6 @@ export const orderService = {
     
     if (dto.payments && dto.payments.length > 0) {
       order.paymentMethodName = dto.payments[0].paymentMethodName;
-      // Map string status to number status if needed or just leave as is, since UI enum logic
-      // But Order UI model expects number for paymentStatus from our previous update. 
-      // Actually backend Payment enum: PENDING = 1, SUCCESS = 2, FAILED = 3
-      // dto.payments[0].status might be integer or string depending on BE configuration.
-      // Assuming BE returns integer or we parse it:
-      order.paymentStatus = typeof dto.payments[0].status === 'number' 
-        ? dto.payments[0].status 
-        : (dto.payments[0].status as any === 'SUCCESS' ? 2 : dto.payments[0].status as any === 'FAILED' ? 3 : 1);
     }
     
     return order;

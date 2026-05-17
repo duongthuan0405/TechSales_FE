@@ -16,8 +16,9 @@ interface ProductResponseDto {
   brand: string;
   categoryId: string;
   images: ProductImageDto[];
-  stockStatus: string;
-  availableQuantity: number;
+  stockStatus?: string;
+  availableQuantity?: number;
+  inventory?: { availableQuantity: number };
   status: ProductStatus;
   rating: number;
 }
@@ -37,7 +38,7 @@ const mapProduct = (dto: ProductResponseDto): Product => ({
   categoryId: dto.categoryId,
   imageUrl: dto.images?.find(img => img.isPrimary)?.imageUrl || dto.images?.[0]?.imageUrl,
   images: dto.images?.map(img => img.imageUrl),
-  stock: dto.availableQuantity,
+  stock: dto.availableQuantity ?? dto.inventory?.availableQuantity ?? 0,
   status: dto.status,
   rating: dto.rating,
   createdAt: '',
