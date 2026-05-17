@@ -7,3 +7,10 @@ export const useGetSalesStats = () => {
     queryFn: () => dashboardService.getSalesStats(),
   });
 };
+
+export const useGetReportSummary = () => {
+  return useQuery({
+    queryKey: ['reportSummary'],
+    queryFn: () => dashboardService.getReportSummary(),
+  });
+};

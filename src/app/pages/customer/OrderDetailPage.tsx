@@ -320,10 +320,9 @@ export function OrderDetailPage() {
       <ReviewModal 
         isOpen={!!reviewItem}
         onClose={() => setReviewItem(null)}
+        orderId={order.id}
         productId={reviewItem?.id || ''}
         productName={reviewItem?.name || ''}
-        userId={user?.id || 'u4'}
-        userName={user?.name || 'Demo Customer'}
       />
     </div>
   );

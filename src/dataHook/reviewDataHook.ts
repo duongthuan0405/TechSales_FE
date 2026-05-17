@@ -20,7 +20,7 @@ export const useGetAllReviews = () => {
 export const useSubmitReview = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (reviewData: Omit<Review, 'id' | 'createdAt' | 'status'>) => 
+    mutationFn: (reviewData: { orderId: string; productId: string; ratingStars: number; reviewComment: string }) => 
       reviewService.submitReview(reviewData),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['reviews', variables.productId] });

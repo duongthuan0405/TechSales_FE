@@ -55,12 +55,8 @@ const roleNavItems: Record<string, NavItem[]> = {
     { icon: <UserCircle className="h-5 w-5" />, label: 'Profile', path: '/business/profile' },
   ],
   'Technical Admin': [
-    { icon: <LayoutDashboard className="h-5 w-5" />, label: 'Dashboard', path: '/technical' },
     { icon: <Users className="h-5 w-5" />, label: 'User Management', path: '/technical/users' },
-    { icon: <Shield className="h-5 w-5" />, label: 'Roles & Permissions', path: '/technical/roles' },
-    { icon: <Database className="h-5 w-5" />, label: 'Database', path: '/technical/database' },
     { icon: <FileText className="h-5 w-5" />, label: 'System Logs', path: '/technical/logs' },
-    { icon: <Settings className="h-5 w-5" />, label: 'Settings', path: '/technical/settings' },
   ],
 };
 

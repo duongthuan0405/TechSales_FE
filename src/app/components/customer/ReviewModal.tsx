@@ -16,19 +16,17 @@ import { toast } from 'sonner';
 interface ReviewModalProps {
   isOpen: boolean;
   onClose: () => void;
+  orderId: string;
   productId: string;
   productName: string;
-  userId: string;
-  userName: string;
 }
 
 export function ReviewModal({ 
   isOpen, 
   onClose, 
+  orderId,
   productId, 
-  productName, 
-  userId, 
-  userName 
+  productName
 }: ReviewModalProps) {
   const [rating, setRating] = useState(5);
   const [hoverRating, setHoverRating] = useState(0);
@@ -42,11 +40,10 @@ export function ReviewModal({
     }
 
     submitReview({
+      orderId,
       productId,
-      userId,
-      userName,
-      rating,
-      comment
+      ratingStars: rating,
+      reviewComment: comment
     }, {
       onSuccess: () => {
         toast.success('Review submitted successfully!');

@@ -27,7 +27,8 @@ export function ProductDetailPage() {
   const navigate = useNavigate();
   const [quantity, setQuantity] = useState(1);
   const { data: product, isLoading: isProductLoading, isError } = useGetProduct(id || '');
-  const { data: reviews = [], isLoading: isReviewsLoading } = useGetProductReviews(id || '');
+  const { data: reviewData, isLoading: isReviewsLoading } = useGetProductReviews(id || '');
+  const reviews = reviewData?.reviews || [];
   const { mutate: addToCart, isPending: isAdding } = useAddToCart();
 
   useEffect(() => {
