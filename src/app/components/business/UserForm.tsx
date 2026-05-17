@@ -27,6 +27,7 @@ const userSchema = z.object({
   phone: z.string().min(10, "Phone number must be at least 10 digits"),
   role: z.enum(['Staff', 'Customer', 'Business Admin', 'Technical Admin']),
   status: z.nativeEnum(UserStatus),
+  password: z.string().min(6, "Password must be at least 6 characters").optional(),
 });
 
 type UserFormValues = z.infer<typeof userSchema>;
@@ -48,6 +49,7 @@ export function UserForm({ initialData, onSubmit, isLoading, forcedRole, current
       phone: initialData?.phone || "",
       role: forcedRole || initialData?.role || 'Staff',
       status: initialData?.status || UserStatus.ACTIVE,
+      password: "TemporaryPassword123!",
     },
   });
 
@@ -96,6 +98,25 @@ export function UserForm({ initialData, onSubmit, isLoading, forcedRole, current
             )}
           />
         </div>
+
+        {!initialData && (
+          <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Temporary Password</FormLabel>
+                <FormControl>
+                  <Input type="text" placeholder="TemporaryPassword123!" {...field} />
+                </FormControl>
+                <p className="text-[10px] text-muted-foreground italic">
+                  Give this password to the new staff member so they can sign in.
+                </p>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
 
         <div className="grid grid-cols-2 gap-4">
           <FormField

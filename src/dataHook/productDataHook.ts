@@ -34,7 +34,7 @@ export const useGetBrands = () => {
 export const useCreateProduct = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (product: Omit<Product, 'id' | 'createdAt'>) => productService.createProduct(product),
+    mutationFn: (product: any) => productService.createProduct(product),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
       queryClient.invalidateQueries({ queryKey: ['admin-products'] });

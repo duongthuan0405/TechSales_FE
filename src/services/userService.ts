@@ -73,7 +73,7 @@ export const userService = {
 
     const dto = await api.post<UserDto>('/admin/users', {
       email: userData.email,
-      password: 'TemporaryPassword123!', // You might want to let the admin set this
+      password: userData.password || 'TemporaryPassword123!',
       roles: [beRole]
     });
     return mapUser(dto);
@@ -90,8 +90,16 @@ export const userService = {
     phone?: string;
     avatarUrl?: string;
     dateOfBirth?: string;
+    avatarFile?: File;
   }): Promise<void> => {
-    await api.put('/user-profile', data);
+    const formData = new FormData();
+    if (data.fullName !== undefined && data.fullName !== null) formData.append('fullName', data.fullName);
+    if (data.phone !== undefined && data.phone !== null) formData.append('phone', data.phone);
+    if (data.avatarUrl !== undefined && data.avatarUrl !== null) formData.append('avatarUrl', data.avatarUrl);
+    if (data.dateOfBirth !== undefined && data.dateOfBirth !== null) formData.append('dateOfBirth', data.dateOfBirth);
+    if (data.avatarFile !== undefined && data.avatarFile !== null) formData.append('avatarFile', data.avatarFile);
+
+    await api.put('/user-profile', formData);
   },
 
   toggleUserStatus: async (id: string, currentStatus: UserStatus): Promise<User> => {

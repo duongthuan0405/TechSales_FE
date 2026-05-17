@@ -3,6 +3,8 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { LoginPage } from './pages/auth/LoginPage';
 import { SignUpPage } from './pages/auth/SignUpPage';
 import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage';
+import { ResetPasswordPage } from './pages/auth/ResetPasswordPage';
+import { VerifyEmailPage } from './pages/auth/VerifyEmailPage';
 import { DashboardLayout } from './components/layout/DashboardLayout';
 import { ProductCatalogPage } from './pages/customer/ProductCatalogPage';
 import { ProductDetailPage } from './pages/customer/ProductDetailPage';
@@ -30,8 +32,6 @@ import { TechnicalDashboardPage } from './pages/technical/TechnicalDashboardPage
 import { UserManagementPage } from './pages/technical/UserManagementPage';
 import { Button } from './components/ui/button';
 import { Toaster } from 'sonner';
-
-
 import { Loader2 } from 'lucide-react';
 import { SalesDashboardPage } from './pages/sales/salesdashboardpage';
 
@@ -53,9 +53,14 @@ function AppContent() {
         <Route path="/auth/login" element={<LoginPage />} />
         <Route path="/auth/signup" element={<SignUpPage />} />
         <Route path="/auth/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
+        <Route path="/auth/verify-email" element={<VerifyEmailPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
+        <Route path="/verify-email" element={<VerifyEmailPage />} />
         {/* Convenience Redirects */}
         <Route path="/login" element={<Navigate to="/auth/login" replace />} />
         <Route path="/signup" element={<Navigate to="/auth/signup" replace />} />
+        <Route path="/forgot-password" element={<Navigate to="/auth/forgot-password" replace />} />
         <Route path="*" element={<Navigate to="/auth/login" replace />} />
       </Routes>
     );

@@ -141,19 +141,22 @@ export const productService = {
     return Array.from(new Set(brands));
   },
 
-  createProduct: async (product: Omit<Product, 'id' | 'createdAt'>): Promise<Product> => {
-    const result = await api.post<ProductResponseDto>('/admin/products', {
-      name: product.name,
-      description: product.description,
-      price: product.price,
-      brand: product.brand,
-      categoryId: product.categoryId,
-      initialStock: product.stock || 0,
-      images: product.images?.map((url, i) => ({
-        imageUrl: url,
-        isPrimary: i === 0,
-      })) || [],
-    });
+  createProduct: async (product: any): Promise<Product> => {
+    const formData = new FormData();
+    formData.append('name', product.name);
+    formData.append('description', product.description);
+    formData.append('price', product.price.toString());
+    formData.append('brand', product.brand);
+    formData.append('categoryId', product.categoryId);
+    formData.append('initialStock', (product.stock || 0).toString());
+
+    if (product.imageFiles && product.imageFiles.length > 0) {
+      for (let i = 0; i < product.imageFiles.length; i++) {
+        formData.append('imageFiles', product.imageFiles[i]);
+      }
+    }
+
+    const result = await api.post<ProductResponseDto>('/admin/products', formData);
     return mapProduct(result);
   },
 

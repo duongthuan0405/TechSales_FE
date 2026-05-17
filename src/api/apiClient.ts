@@ -5,7 +5,7 @@
  * Backend trả về chuẩn: { success: boolean, message: string, data: T }
  */
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const BASE_URL = (import.meta as any).env.VITE_API_BASE_URL;
 
 // ─── Types ───────────────────────────────────────────────────
 export interface ApiResponse<T> {
@@ -39,10 +39,13 @@ async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promi
   const token = localStorage.getItem('token');
 
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...(options.headers as Record<string, string> || {}),
   };
+
+  if (!(options.body instanceof FormData)) {
+    headers['Content-Type'] = 'application/json';
+  }
 
   const response = await fetch(`${BASE_URL}${endpoint}`, {
     ...options,
@@ -82,22 +85,25 @@ export const api = {
   get: <T>(endpoint: string) =>
     apiRequest<T>(endpoint, { method: 'GET' }),
 
-  post: <T>(endpoint: string, body?: unknown) =>
+  post: <T>(endpoint: string, body?: unknown, headers?: Record<string, string>) =>
     apiRequest<T>(endpoint, {
       method: 'POST',
-      body: body ? JSON.stringify(body) : undefined,
+      body: body instanceof FormData ? body : (body ? JSON.stringify(body) : undefined),
+      headers,
     }),
 
-  put: <T>(endpoint: string, body?: unknown) =>
+  put: <T>(endpoint: string, body?: unknown, headers?: Record<string, string>) =>
     apiRequest<T>(endpoint, {
       method: 'PUT',
-      body: body ? JSON.stringify(body) : undefined,
+      body: body instanceof FormData ? body : (body ? JSON.stringify(body) : undefined),
+      headers,
     }),
 
-  patch: <T>(endpoint: string, body?: unknown) =>
+  patch: <T>(endpoint: string, body?: unknown, headers?: Record<string, string>) =>
     apiRequest<T>(endpoint, {
       method: 'PATCH',
-      body: body ? JSON.stringify(body) : undefined,
+      body: body instanceof FormData ? body : (body ? JSON.stringify(body) : undefined),
+      headers,
     }),
 
   delete: <T>(endpoint: string) =>

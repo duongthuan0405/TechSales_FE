@@ -33,6 +33,7 @@ const productSchema = z.object({
   categoryId: z.string().min(1, "Category is required"),
   brand: z.string().min(1, "Brand is required"),
   imageUrl: z.string().optional(),
+  imageFiles: z.any().optional(),
 });
 
 type ProductFormValues = z.infer<typeof productSchema>;
@@ -55,6 +56,7 @@ export function ProductForm({ initialData, onSubmit, isLoading }: ProductFormPro
       categoryId: initialData?.categoryId || "",
       brand: initialData?.brand || "",
       imageUrl: initialData?.imageUrl || "",
+      imageFiles: [],
     },
   });
 
@@ -196,19 +198,44 @@ export function ProductForm({ initialData, onSubmit, isLoading }: ProductFormPro
           )}
         />
 
-        <FormField
-          control={form.control}
-          name="imageUrl"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Image URL</FormLabel>
-              <FormControl>
-                <Input placeholder="https://example.com/image.jpg" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        {!initialData ? (
+          <FormField
+            control={form.control}
+            name="imageFiles"
+            render={({ field: { onChange, value, ...field } }) => (
+              <FormItem>
+                <FormLabel>Product Images (Upload multiple)</FormLabel>
+                <FormControl>
+                  <Input
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={(e) => {
+                      const files = e.target.files ? Array.from(e.target.files) : [];
+                      onChange(files);
+                    }}
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        ) : (
+          <FormField
+            control={form.control}
+            name="imageUrl"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Image URL</FormLabel>
+                <FormControl>
+                  <Input placeholder="https://example.com/image.jpg" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
 
         <div className="flex justify-end gap-2 pt-4">
           <Button type="submit" disabled={isLoading} className="min-w-[120px]">
