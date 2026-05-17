@@ -1,5 +1,6 @@
 import api, { PagedResponse } from '../api/apiClient';
 import { User, UserRole, UserStatus } from '../models/ui_types/user';
+import { AuditLog } from '../models/ui_types/auditLog';
 
 // ─── BE Response Types ──────────────────────────────────────
 interface UserDto {
@@ -17,20 +18,25 @@ interface UserDto {
 }
 
 // ─── Role Mapping ───────────────────────────────────────────
-const mapRole = (roles: string[]): UserRole => {
-  if (roles.includes('Admin')) return 'Technical Admin';
-  if (roles.includes('Staff')) return 'Staff';
-  if (roles.includes('Business Admin')) return 'Business Admin';
+const mapRole = (roles: any[] | null | undefined): UserRole => {
+  if (!roles || !Array.isArray(roles)) return 'Customer';
+  const roleNames = roles.map(r => {
+    if (!r) return '';
+    return typeof r === 'string' ? r : (r.name || '');
+  });
+  if (roleNames.includes('Technical Admin') || roleNames.includes('Admin')) return 'Technical Admin';
+  if (roleNames.includes('Business Admin')) return 'Business Admin';
+  if (roleNames.includes('Staff')) return 'Staff';
   return 'Customer';
 };
 
-const mapUser = (dto: UserDto): User => ({
+const mapUser = (dto: any): User => ({
   id: dto.id,
   email: dto.email,
   status: dto.status,
   createdAt: dto.createdAt,
-  fullName: dto.profile?.fullName || '',
-  phone: dto.profile?.phone || '',
+  fullName: dto.profile?.fullName || dto.fullName || dto.email.split('@')[0],
+  phone: dto.profile?.phone || dto.phone || '',
   avatarUrl: dto.profile?.avatarUrl,
   dateOfBirth: dto.profile?.dateOfBirth,
   role: mapRole(dto.roles),
@@ -38,11 +44,26 @@ const mapUser = (dto: UserDto): User => ({
 
 export const userService = {
   getUsers: async (): Promise<User[]> => {
-    // Use admin customers endpoint
-    const paged = await api.get<PagedResponse<UserDto>>(
-      '/admin/users/customers?pageNumber=1&pageSize=100',
-    );
-    return paged.items.map(mapUser);
+    try {
+      const [customersPaged, staffPaged] = await Promise.all([
+        api.get<PagedResponse<UserDto>>('/admin/users/customers?pageNumber=1&pageSize=100'),
+        api.get<PagedResponse<UserDto>>('/admin/users/staff?pageNumber=1&pageSize=100')
+      ]);
+      const customers = customersPaged.items.map(mapUser);
+      const staff = staffPaged.items.map(mapUser);
+      const allUsers = [...customers, ...staff];
+      const seen = new Set();
+      return allUsers.filter(u => {
+        const duplicate = seen.has(u.id);
+        seen.add(u.id);
+        return !duplicate;
+      });
+    } catch {
+      const paged = await api.get<PagedResponse<UserDto>>(
+        '/admin/users/customers?pageNumber=1&pageSize=100',
+      );
+      return paged.items.map(mapUser);
+    }
   },
 
   getCustomers: async (): Promise<User[]> => {
@@ -135,5 +156,9 @@ export const userService = {
     return updated;
   },
 
-
+  getAuditLogs: async (pageNumber = 1, pageSize = 50): Promise<PagedResponse<AuditLog>> => {
+    return await api.get<PagedResponse<AuditLog>>(
+      `/admin/audit-logs?pageNumber=${pageNumber}&pageSize=${pageSize}`
+    );
+  },
 };

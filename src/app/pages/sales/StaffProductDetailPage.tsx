@@ -38,7 +38,8 @@ export function StaffProductDetailPage() {
   const navigate = useNavigate();
   
   const { data: product, isLoading: isProductLoading, isError } = useGetProduct(id || '');
-  const { data: reviews = [], isLoading: isReviewsLoading } = useGetProductReviews(id || '');
+  const { data: reviewData, isLoading: isReviewsLoading } = useGetProductReviews(id || '');
+  const reviews = reviewData?.reviews || [];
   const { mutate: moderateReview } = useModerateReview();
   const { mutate: replyToReview } = useReplyToReview();
 

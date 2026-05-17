@@ -30,6 +30,7 @@ import { ReportsPage } from './pages/business/ReportsPage';
 import { VoucherManagementPage } from './pages/business/VoucherManagementPage';
 import { TechnicalDashboardPage } from './pages/technical/TechnicalDashboardPage';
 import { UserManagementPage } from './pages/technical/UserManagementPage';
+import { SystemLogsPage } from './pages/technical/SystemLogsPage';
 import { Button } from './components/ui/button';
 import { Toaster } from 'sonner';
 import { Loader2 } from 'lucide-react';
@@ -70,7 +71,7 @@ function AppContent() {
     Customer: '/customer',
     Staff: '/sales',
     'Business Admin': '/business',
-    'Technical Admin': '/technical',
+    'Technical Admin': '/technical/users',
   };
 
   const getRoleDisplayName = (role: string) => {
@@ -148,6 +149,7 @@ function AppContent() {
           <>
             <Route path="/technical" element={<TechnicalDashboardPage />} />
             <Route path="/technical/users" element={<UserManagementPage />} />
+            <Route path="/technical/logs" element={<SystemLogsPage />} />
           </>
         )}
 

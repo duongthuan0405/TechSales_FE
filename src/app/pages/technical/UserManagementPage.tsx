@@ -11,8 +11,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../../components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "../../components/ui/dialog";
+import { UserForm } from "../../components/business/UserForm";
 import { Search, Edit, Trash2, UserPlus, Loader2, Lock, Unlock } from 'lucide-react';
-import { useGetUsers, useToggleUserStatus } from '../../../dataHook/userDataHook';
+import { useGetUsers, useToggleUserStatus, useCreateUser } from '../../../dataHook/userDataHook';
 import { toast } from 'sonner';
 import { useAuth } from '../../context/AuthContext';
 
@@ -20,8 +28,10 @@ export function UserManagementPage() {
   const { user: currentUser } = useAuth();
   const { data: users = [], isLoading, isError } = useGetUsers();
   const { mutate: toggleStatus, isPending: isToggling } = useToggleUserStatus();
+  const createMutation = useCreateUser();
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
+  const [isFormOpen, setIsFormOpen] = useState(false);
 
   useEffect(() => {
     if (isError) {
@@ -53,7 +63,7 @@ export function UserManagementPage() {
           <h1 className="text-3xl font-bold">User Management</h1>
           <p className="text-muted-foreground">Manage system users and permissions</p>
         </div>
-        <Button>
+        <Button onClick={() => setIsFormOpen(true)}>
           <UserPlus className="mr-2 h-4 w-4" />
           Add User
         </Button>
@@ -75,10 +85,10 @@ export function UserManagementPage() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Roles</SelectItem>
-            <SelectItem value="customer">Customer</SelectItem>
-            <SelectItem value="sales">Sales Staff</SelectItem>
-            <SelectItem value="business">Business Admin</SelectItem>
-            <SelectItem value="technical">Technical Admin</SelectItem>
+            <SelectItem value="Customer">Customer</SelectItem>
+            <SelectItem value="Staff">Sales Staff</SelectItem>
+            <SelectItem value="Business Admin">Business Admin</SelectItem>
+            <SelectItem value="Technical Admin">Technical Admin</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -156,6 +166,33 @@ export function UserManagementPage() {
           </CardContent>
         </Card>
       )}
+
+      {/* Form Dialog */}
+      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add User Account</DialogTitle>
+            <DialogDescription>
+              Create a new user account with administrative or standard access.
+            </DialogDescription>
+          </DialogHeader>
+          <UserForm 
+            onSubmit={(data) => {
+              createMutation.mutate(data, {
+                onSuccess: () => {
+                  toast.success("User account created successfully");
+                  setIsFormOpen(false);
+                },
+                onError: (err: any) => {
+                  toast.error(err?.message || "Failed to create user account");
+                }
+              });
+            }}
+            isLoading={createMutation.isPending}
+            currentUserRole={currentUser?.role}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

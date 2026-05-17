@@ -28,17 +28,7 @@ export function LoginPage() {
     });
   };
 
-  const quickLogin = (loginEmail: string) => {
-    login({ email: loginEmail, password: 'password' }, {
-      onSuccess: () => {
-        toast.success('Quick login successful!');
-        navigate('/');
-      },
-      onError: (err: any) => {
-        toast.error(err.message || 'Quick login failed');
-      }
-    });
-  };
+
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4 dark:from-slate-950 dark:to-slate-900">
@@ -99,33 +89,7 @@ export function LoginPage() {
               </Button>
             </form>
 
-            <div className="relative my-8">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-border" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-card px-2 text-muted-foreground">Demo Accounts</span>
-              </div>
-            </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              {[
-                { label: 'Customer', email: 'customer@email.com' },
-                { label: 'Sales', email: 'sales@techsales.com' },
-                { label: 'Business', email: 'business@techsales.com' },
-                { label: 'Admin', email: 'admin@techsales.com' }
-              ].map(demo => (
-                <Button
-                  key={demo.label}
-                  variant="outline"
-                  size="sm"
-                  className="text-xs h-10"
-                  onClick={() => quickLogin(demo.email)}
-                >
-                  {demo.label}
-                </Button>
-              ))}
-            </div>
           </CardContent>
           <CardFooter className="flex justify-center border-t border-border/50 pt-6">
             <div className="text-sm">

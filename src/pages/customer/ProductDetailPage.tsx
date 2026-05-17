@@ -33,7 +33,8 @@ export function ProductDetailPage() {
 
   const { data: product, isLoading: isProductLoading, isError } = useGetProduct(id || '');
   const { data: categoriesData = [] } = useGetCategories();
-  const { data: reviews = [], isLoading: isReviewsLoading } = useGetProductReviews(id || '');
+  const { data: reviewData, isLoading: isReviewsLoading } = useGetProductReviews(id || '');
+  const reviews = reviewData?.reviews || [];
   const { mutate: addToCart, isPending: isAdding } = useAddToCart();
 
   useEffect(() => {
