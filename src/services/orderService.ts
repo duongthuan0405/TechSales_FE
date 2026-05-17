@@ -182,7 +182,7 @@ export const orderService = {
         // Product not found, skip
       }
     }
-    const shippingFee = subtotal > 1000 ? 0 : 50;
+    const shippingFee = 0;
     const discount = 0;
     return {
       subtotal,

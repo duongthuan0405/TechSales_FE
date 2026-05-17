@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../../components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/tabs";
@@ -12,7 +12,6 @@ import {
 } from "../../components/ui/table";
 import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/button";
-import { Input } from "../../components/ui/input";
 import { 
   BarChart, 
   Bar, 
@@ -21,8 +20,6 @@ import {
   CartesianGrid, 
   Tooltip, 
   ResponsiveContainer,
-  LineChart,
-  Line,
   AreaChart,
   Area
 } from "recharts";
@@ -37,78 +34,36 @@ import {
   Filter,
   Eye
 } from "lucide-react";
-import { useGetOrders } from "../../../dataHook/orderDataHook";
-import { useGetProducts } from "../../../dataHook/productDataHook";
+import { useGetAdminOrders } from "../../../dataHook/orderDataHook";
+import { useGetReportSummary } from "../../../dataHook/dashboardDataHook";
 import { OrderStatus } from "../../../models/ui_types/order";
 
 export function ReportsPage() {
   const navigate = useNavigate();
-  const { data: orders = [], isLoading: ordersLoading } = useGetOrders();
-  const { data: products = [], isLoading: productsLoading } = useGetProducts();
+  const { data: orders = [], isLoading: ordersLoading } = useGetAdminOrders();
+  const { data: reportSummary, isLoading: reportLoading } = useGetReportSummary();
   const [dateRange, setDateRange] = useState("30d");
 
-  // --- REVENUE DATA CALCULATION ---
-  const revenueStats = useMemo(() => {
-    const totalRevenue = orders
-      .filter(o => o.status !== OrderStatus.CANCELLED)
-      .reduce((sum, o) => sum + o.totalAmount, 0);
-    
-    const completedOrders = orders.filter(o => o.status === OrderStatus.DELIVERED).length;
-    const pendingRevenue = orders
-      .filter(o => o.status === OrderStatus.PENDING || o.status === OrderStatus.APPROVED)
-      .reduce((sum, o) => sum + o.totalAmount, 0);
+  // --- MAP VALUES FROM BACKEND API REPORT SUMMARY ---
+  const totalRevenue = reportSummary?.totalRevenue ?? 0;
+  const completedOrdersCount = reportSummary?.completedOrders ?? 0;
+  const pendingRevenue = reportSummary?.pendingRevenue ?? 0;
+  const topProductSharePercentage = reportSummary?.topProductSharePercentage ?? 0;
+  const topProductCategoryName = reportSummary?.topProductCategoryName ?? "N/A";
+  
+  const revenueTrendData = reportSummary?.revenueTrend?.map(t => ({
+    name: new Date(t.date).toLocaleDateString('en-US', { weekday: 'short' }),
+    revenue: t.totalRevenue
+  })) ?? [];
 
-    // Mock chart data for revenue
-    const chartData = [
-      { name: "Mon", revenue: 4000 },
-      { name: "Tue", revenue: 3000 },
-      { name: "Wed", revenue: 5000 },
-      { name: "Thu", revenue: 2780 },
-      { name: "Fri", revenue: 6890 },
-      { name: "Sat", revenue: 8390 },
-      { name: "Sun", revenue: 9490 },
-    ];
+  const topProductsList = reportSummary?.topSellingProducts ?? [];
 
-    return { totalRevenue, completedOrders, pendingRevenue, chartData };
-  }, [orders]);
+  const statusDistribution = reportSummary?.orderStatusDistribution ?? [];
+  const totalOrders = statusDistribution.reduce((sum, s) => sum + s.count, 0);
 
-  // --- TOP SELLING PRODUCTS CALCULATION ---
-  const topProducts = useMemo(() => {
-    const productSales: Record<string, { id: string, name: string, quantity: number, revenue: number }> = {};
-    
-    orders.forEach(order => {
-      if (order.status === OrderStatus.CANCELLED) return;
-      order.items?.forEach(item => {
-        if (!productSales[item.productId]) {
-          productSales[item.productId] = { 
-            id: item.productId, 
-            name: item.productName || "Unknown Product", 
-            quantity: 0, 
-            revenue: 0 
-          };
-        }
-        productSales[item.productId].quantity += item.quantity;
-        productSales[item.productId].revenue += item.price * item.quantity;
-      });
-    });
-
-    return Object.values(productSales)
-      .sort((a, b) => b.quantity - a.quantity)
-      .slice(0, 5);
-  }, [orders]);
-
-  // --- ORDERS OVERVIEW ---
-  const orderStats = useMemo(() => {
-    const statusCounts = {
-      [OrderStatus.PENDING]: orders.filter(o => o.status === OrderStatus.PENDING).length,
-      [OrderStatus.APPROVED]: orders.filter(o => o.status === OrderStatus.APPROVED).length,
-      [OrderStatus.SHIPPING]: orders.filter(o => o.status === OrderStatus.SHIPPING).length,
-      [OrderStatus.DELIVERED]: orders.filter(o => o.status === OrderStatus.DELIVERED).length,
-      [OrderStatus.CANCELLED]: orders.filter(o => o.status === OrderStatus.CANCELLED).length,
-    };
-
-    return { statusCounts, total: orders.length };
-  }, [orders]);
+  const getStatusCount = (statusStr: string) => {
+    return statusDistribution.find(s => s.status.toUpperCase() === statusStr.toUpperCase())?.count ?? 0;
+  };
 
   const getStatusVariant = (status: OrderStatus) => {
     switch (status) {
@@ -120,6 +75,17 @@ export function ReportsPage() {
       default: return "default";
     }
   };
+
+  if (reportLoading || ordersLoading) {
+    return (
+      <div className="flex h-[400px] items-center justify-center">
+        <div className="text-center space-y-2">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <p className="text-sm text-muted-foreground">Loading business reports...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -146,7 +112,7 @@ export function ReportsPage() {
             <DollarSign className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${revenueStats.totalRevenue.toLocaleString()}</div>
+            <div className="text-2xl font-bold">${totalRevenue.toLocaleString()}</div>
             <div className="flex items-center text-xs text-green-500 mt-1">
               <ArrowUpRight className="mr-1 h-3 w-3" />
               +12.5% from last month
@@ -159,7 +125,7 @@ export function ReportsPage() {
             <FileText className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{revenueStats.completedOrders}</div>
+            <div className="text-2xl font-bold">{completedOrdersCount}</div>
             <div className="text-xs text-muted-foreground mt-1">
               Across all categories
             </div>
@@ -172,7 +138,7 @@ export function ReportsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              ${orders.length > 0 ? (revenueStats.totalRevenue / orders.length).toFixed(2) : "0"}
+              ${totalOrders > 0 ? (totalRevenue / totalOrders).toFixed(2) : "0"}
             </div>
             <div className="flex items-center text-xs text-red-500 mt-1">
               <ArrowDownRight className="mr-1 h-3 w-3" />
@@ -186,9 +152,9 @@ export function ReportsPage() {
             <Package className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">42%</div>
+            <div className="text-2xl font-bold">{topProductSharePercentage}%</div>
             <div className="text-xs text-muted-foreground mt-1">
-              From category: Electronics
+              From category: {topProductCategoryName}
             </div>
           </CardContent>
         </Card>
@@ -212,11 +178,11 @@ export function ReportsPage() {
               <CardContent className="h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={[
-                    { name: 'Pending', count: orderStats.statusCounts[OrderStatus.PENDING] },
-                    { name: 'Confirmed', count: orderStats.statusCounts[OrderStatus.APPROVED] },
-                    { name: 'Shipping', count: orderStats.statusCounts[OrderStatus.SHIPPING] },
-                    { name: 'Delivered', count: orderStats.statusCounts[OrderStatus.DELIVERED] },
-                    { name: 'Cancelled', count: orderStats.statusCounts[OrderStatus.CANCELLED] },
+                    { name: 'Pending', count: getStatusCount('PENDING') },
+                    { name: 'Confirmed', count: getStatusCount('APPROVED') },
+                    { name: 'Shipping', count: getStatusCount('SHIPPING') },
+                    { name: 'Delivered', count: getStatusCount('DELIVERED') },
+                    { name: 'Cancelled', count: getStatusCount('CANCELLED') },
                   ]}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
                     <XAxis dataKey="name" />
@@ -237,9 +203,9 @@ export function ReportsPage() {
                   <div className="flex items-center">
                     <div className="ml-4 space-y-1">
                       <p className="text-sm font-medium leading-none">Total Orders</p>
-                      <p className="text-sm text-muted-foreground">{orderStats.total} total orders processed</p>
+                      <p className="text-sm text-muted-foreground">{totalOrders} total orders processed</p>
                     </div>
-                    <div className="ml-auto font-bold">{orderStats.total}</div>
+                    <div className="ml-auto font-bold">{totalOrders}</div>
                   </div>
                   <div className="flex items-center">
                     <div className="ml-4 space-y-1">
@@ -247,7 +213,7 @@ export function ReportsPage() {
                       <p className="text-sm text-muted-foreground">Percentage of successful deliveries</p>
                     </div>
                     <div className="ml-auto font-bold">
-                      {orderStats.total > 0 ? ((orderStats.statusCounts[OrderStatus.DELIVERED] / orderStats.total) * 100).toFixed(0) : 0}%
+                      {totalOrders > 0 ? ((getStatusCount('DELIVERED') / totalOrders) * 100).toFixed(0) : 0}%
                     </div>
                   </div>
                   <div className="flex items-center">
@@ -256,7 +222,7 @@ export function ReportsPage() {
                       <p className="text-sm text-muted-foreground">Orders rejected or cancelled</p>
                     </div>
                     <div className="ml-auto font-bold text-destructive">
-                      {orderStats.total > 0 ? ((orderStats.statusCounts[OrderStatus.CANCELLED] / orderStats.total) * 100).toFixed(0) : 0}%
+                      {totalOrders > 0 ? ((getStatusCount('CANCELLED') / totalOrders) * 100).toFixed(0) : 0}%
                     </div>
                   </div>
                 </div>
@@ -334,8 +300,8 @@ export function ReportsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {topProducts.map((p) => (
-                    <TableRow key={p.id}>
+                  {topProductsList.map((p) => (
+                    <TableRow key={p.productId}>
                       <TableCell className="font-medium">{p.name}</TableCell>
                       <TableCell className="text-center">{p.quantity}</TableCell>
                       <TableCell className="text-right">${p.revenue.toLocaleString()}</TableCell>
@@ -346,7 +312,7 @@ export function ReportsPage() {
                       </TableCell>
                     </TableRow>
                   ))}
-                  {topProducts.length === 0 && (
+                  {topProductsList.length === 0 && (
                     <TableRow>
                       <TableCell colSpan={4} className="h-24 text-center">No sales data available</TableCell>
                     </TableRow>
@@ -366,7 +332,7 @@ export function ReportsPage() {
             </CardHeader>
             <CardContent className="h-[400px] pt-4">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={revenueStats.chartData}>
+                <AreaChart data={revenueTrendData}>
                   <defs>
                     <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
