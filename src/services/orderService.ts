@@ -9,6 +9,7 @@ interface OrderResponseDto {
   createdAt: string;
   paymentMethodName?: string;
   isPaymentFailed?: boolean | null;
+  checkoutUrl?: string;
 }
 
 interface OrderItemDto {
@@ -78,6 +79,7 @@ const mapOrder = (dto: OrderResponseDto): Order => ({
   createdAt: dto.createdAt,
   paymentMethodName: dto.paymentMethodName,
   isPaymentFailed: dto.isPaymentFailed,
+  checkoutUrl: dto.checkoutUrl,
 });
 
 const mapOrderDetail = (dto: OrderDetailDto): Order => ({

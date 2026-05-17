@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
-import { RadioGroup, RadioGroupItem } from '../../components/ui/radio-group';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 import { Separator } from '../../components/ui/separator';
 import { 
   CreditCard, 
@@ -88,9 +88,11 @@ export function CheckoutPage() {
     return { ...item, product };
   }).filter((item: any) => item.product);
 
-  const { data: summary } = useCheckoutSummary({
+  const checkoutSummaryParams = useMemo(() => ({
     items: checkoutItems.map((i: any) => ({ productId: i.productId, quantity: i.quantity }))
-  });
+  }), [checkoutItems]);
+
+  const { data: summary } = useCheckoutSummary(checkoutSummaryParams);
 
   const subtotal = summary?.subtotal || 0;
   const shippingFee = summary?.shippingFee || 0;
@@ -198,16 +200,23 @@ export function CheckoutPage() {
       voucherCode: voucherCode || undefined
     }, {
       onSuccess: (data: any) => {
+        const handleSuccess = () => {
+          if (data.checkoutUrl) {
+            // Redirect to Payment Gateway
+            window.location.href = data.checkoutUrl;
+          } else {
+            // COD or no payment gateway
+            toast.success('Order placed successfully!');
+            navigate('/customer/order-success', { state: { orderId: data.id } });
+          }
+        };
+
         if (fromCart) {
           clearCart(undefined, {
-            onSuccess: () => {
-              toast.success('Order placed successfully!');
-              navigate('/customer/order-success', { state: { orderId: data.id } });
-            }
+            onSuccess: handleSuccess
           });
         } else {
-          toast.success('Order placed successfully!');
-          navigate('/customer/order-success', { state: { orderId: data.id } });
+          handleSuccess();
         }
       },
       onError: (error: any) => {
@@ -420,20 +429,25 @@ export function CheckoutPage() {
               </div>
             </CardHeader>
             <CardContent className="p-6">
-              <RadioGroup value={paymentMethodId} onValueChange={setPaymentMethodId} className="grid gap-4 md:grid-cols-3">
-                {availablePaymentMethods.map((method) => (
-                  <div key={method.id} className="h-full">
-                    <RadioGroupItem value={method.id} id={method.id} className="peer sr-only" />
-                    <Label
-                      htmlFor={method.id}
-                      className="flex flex-col items-center justify-between rounded-xl border-2 border-border/40 bg-background p-5 hover:bg-muted peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-muted transition-all cursor-pointer h-full"
-                    >
-                      <span className="font-bold text-xs text-center uppercase tracking-tight text-foreground">{method.name}</span>
-                      <p className="mt-1 text-[8px] text-muted-foreground text-center line-clamp-1 font-medium italic uppercase tracking-tight">{method.description}</p>
-                    </Label>
-                  </div>
-                ))}
-              </RadioGroup>
+              <Select value={paymentMethodId} onValueChange={setPaymentMethodId}>
+                <SelectTrigger className="w-full h-14 rounded-xl border-2 border-border/40 focus:border-primary focus:ring-0 transition-all bg-background">
+                  <SelectValue placeholder="Select Payment Method" />
+                </SelectTrigger>
+                <SelectContent className="rounded-xl border-border bg-card shadow-lg">
+                  {availablePaymentMethods.map((method) => (
+                    <SelectItem key={method.id} value={method.id} className="py-3 cursor-pointer rounded-lg hover:bg-muted/50 focus:bg-muted/50 transition-colors">
+                      <div className="flex flex-col items-start text-left">
+                        <span className="font-bold text-xs uppercase tracking-tight text-foreground">{method.name}</span>
+                        {method.description && (
+                          <span className="mt-1 text-[10px] text-muted-foreground font-medium italic uppercase tracking-tight line-clamp-1">
+                            {method.description}
+                          </span>
+                        )}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </CardContent>
           </Card>
         </div>

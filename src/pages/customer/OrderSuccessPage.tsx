@@ -8,7 +8,8 @@ import confetti from 'canvas-confetti';
 export function OrderSuccessPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const orderId = location.state?.orderId || 'ORD-UNKNOWN';
+  const searchParams = new URLSearchParams(location.search);
+  const orderId = location.state?.orderId || searchParams.get('orderId') || 'ORD-UNKNOWN';
 
   useEffect(() => {
     // Launch confetti!

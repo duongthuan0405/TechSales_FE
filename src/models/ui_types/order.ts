@@ -32,4 +32,5 @@ export interface Order {
   paymentMethodId?: string; // Relation in DB
   paymentMethodName?: string; // UI convenience
   isPaymentFailed?: boolean | null; // UI convenience
+  checkoutUrl?: string; // Redirect link for online payment
 }
