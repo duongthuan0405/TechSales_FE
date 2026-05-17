@@ -1,13 +1,20 @@
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { StatsCard } from '../../components/analytics/StatsCard';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table';
 import { Badge } from '../../components/ui/badge';
 import { Users, Shield, Database, Activity } from 'lucide-react';
-import { users } from '../../data/mockData';
-import { UserStatus } from '../../models/ui_types/user';
+import { userService } from '../../services/userService';
+import { User, UserStatus } from '../../models/ui_types/user';
 
 export function TechnicalDashboardPage() {
-  const activeUsers = users.filter(u => u.status === UserStatus.ACTIVE).length;
+  const [userList, setUserList] = useState<User[]>([]);
+
+  useEffect(() => {
+    userService.getUsers().then(setUserList).catch(() => setUserList([]));
+  }, []);
+
+  const activeUsers = userList.filter(u => u.status === UserStatus.ACTIVE).length;
   const systemLogs = [
     { id: 1, timestamp: '2026-05-08 11:23:45', level: 'info', message: 'User login successful', user: 'john.smith@email.com' },
     { id: 2, timestamp: '2026-05-08 11:22:12', level: 'warning', message: 'High memory usage detected', user: 'system' },
@@ -35,7 +42,7 @@ export function TechnicalDashboardPage() {
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
         <StatsCard
           title="Total Users"
-          value={users.length}
+          value={userList.length}
           change="+3 this week"
           changeType="positive"
           icon={Users}
@@ -78,7 +85,7 @@ export function TechnicalDashboardPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {users.map(user => (
+                {userList.map(user => (
                   <TableRow key={user.id}>
                     <TableCell>
                       <div>

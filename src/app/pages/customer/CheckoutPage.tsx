@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router';
+import { useEffect, useState, useMemo } from 'react';
+import { useNavigate, useLocation } from 'react-router';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
-import { RadioGroup, RadioGroupItem } from '../../components/ui/radio-group';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 import { Separator } from '../../components/ui/separator';
 import { 
   CreditCard, 
@@ -22,7 +22,7 @@ import { useGetCart, useClearCart } from '../../../dataHook/cartDataHook';
 import { useGetProducts } from '../../../dataHook/productDataHook';
 import { useCreateOrder, useCheckoutSummary } from '../../../dataHook/orderDataHook';
 import { useGetPaymentMethods } from '../../../dataHook/paymentDataHook';
-import { useGetAddresses } from '../../../dataHook/addressDataHook';
+import { useGetAddresses, useCreateAddress } from '../../../dataHook/addressDataHook';
 import { useValidateVoucher } from '../../../dataHook/voucherDataHook';
 import { VoucherModal } from '../../components/customer/VoucherModal';
 import { Voucher, VoucherType } from '../../../models/ui_types/voucher';
@@ -31,7 +31,13 @@ import { toast } from 'sonner';
 
 export function CheckoutPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const stateItems = location.state?.items || [];
+  const fromCart = location.state?.fromCart ?? true; // fallback to true if undefined
+
   const { data: cartItems = [], isLoading: cartLoading } = useGetCart();
+  const checkoutItems = stateItems.length > 0 ? stateItems : cartItems;
+
   const { data: products = [] } = useGetProducts();
   const { data: availablePaymentMethods = [] } = useGetPaymentMethods();
   const { data: savedAddresses = [] } = useGetAddresses();
@@ -65,14 +71,28 @@ export function CheckoutPage() {
     }
   }, [availablePaymentMethods, paymentMethodId, savedAddresses, selectedAddressId]);
 
-  const cartWithDetails = cartItems.map(item => {
+  const cartWithDetails = checkoutItems.map((item: any) => {
+    // If it has productName, it already has details (from cart hook or ProductDetailPage state)
+    if (item.productName) {
+      return { 
+        ...item, 
+        product: { 
+          id: item.productId, 
+          name: item.productName, 
+          price: item.price, 
+          imageUrl: item.imageUrl 
+        } 
+      };
+    }
     const product = products.find(p => p.id === item.productId);
     return { ...item, product };
-  }).filter(item => item.product);
+  }).filter((item: any) => item.product);
 
-  const { data: summary } = useCheckoutSummary({
-    items: cartItems.map(i => ({ productId: i.productId, quantity: i.quantity }))
-  });
+  const checkoutSummaryParams = useMemo(() => ({
+    items: checkoutItems.map((i: any) => ({ productId: i.productId, quantity: i.quantity }))
+  }), [checkoutItems]);
+
+  const { data: summary } = useCheckoutSummary(checkoutSummaryParams);
 
   const subtotal = summary?.subtotal || 0;
   const shippingFee = summary?.shippingFee || 0;
@@ -84,11 +104,7 @@ export function CheckoutPage() {
     if (appliedVoucher.type === VoucherType.FIXED) {
       return appliedVoucher.value;
     } else {
-      let discountAmount = (subtotal * appliedVoucher.value) / 100;
-      if (appliedVoucher.maxDiscountAmount && discountAmount > appliedVoucher.maxDiscountAmount) {
-        discountAmount = appliedVoucher.maxDiscountAmount;
-      }
-      return discountAmount;
+      return (subtotal * appliedVoucher.value) / 100;
     }
   };
 
@@ -97,15 +113,15 @@ export function CheckoutPage() {
 
   const handleApplyVoucher = async () => {
     if (!voucherCode) return;
-    setIsValidatingVoucher(true);
-    const result = await validateVoucher(voucherCode, subtotal);
-    setIsValidatingVoucher(false);
-
-    if (result.valid && result.voucher) {
-      setAppliedVoucher(result.voucher);
-      toast.success(result.message);
-    } else {
-      toast.error(result.message);
+    try {
+      setIsValidatingVoucher(true);
+      const voucher = await validateVoucher.mutateAsync({ code: voucherCode, orderAmount: subtotal });
+      setAppliedVoucher(voucher);
+      toast.success('Voucher applied successfully');
+    } catch (error: any) {
+      toast.error(error.message || 'Invalid voucher');
+    } finally {
+      setIsValidatingVoucher(false);
     }
   };
 
@@ -127,48 +143,86 @@ export function CheckoutPage() {
     setShippingAddress(prev => ({ ...prev, [id]: value }));
   };
 
-  const handlePlaceOrder = () => {
-    let finalAddress = '';
+  const { mutateAsync: createAddress } = useCreateAddress();
+  const { refetch: refetchAddresses } = useGetAddresses();
+  
+  const handlePlaceOrder = async () => {
+    let finalAddressId = selectedAddressId;
     
-    if (!isAddingNewAddress) {
-      const addr = savedAddresses.find(a => a.id === selectedAddressId);
-      if (!addr) {
-        toast.error('Please select a shipping address');
-        return;
-      }
-      finalAddress = `${addr.detail}, ${addr.ward}, ${addr.province}`;
-    } else {
+    if (isAddingNewAddress) {
       if (!shippingAddress.detail || !shippingAddress.province || !shippingAddress.ward) {
         toast.error('Please fill in all shipping details');
         return;
       }
-      finalAddress = `${shippingAddress.detail}, ${shippingAddress.ward}, ${shippingAddress.province}`;
+      
+      try {
+        // Step 1: Create the address
+        await createAddress({
+          province: shippingAddress.province,
+          ward: shippingAddress.ward,
+          detail: shippingAddress.detail,
+          isDefault: false
+        });
+        
+        // Step 2: Since BE doesn't return ID, fetch list and find the match
+        const { data: freshAddresses } = await refetchAddresses();
+        const found = freshAddresses?.find(a => 
+          a.province === shippingAddress.province && 
+          a.ward === shippingAddress.ward && 
+          a.detail === shippingAddress.detail
+        );
+        
+        if (found) {
+          finalAddressId = found.id;
+        } else {
+          throw new Error('Could not retrieve new address ID');
+        }
+      } catch (error) {
+        toast.error('Failed to save or retrieve new shipping address');
+        return;
+      }
     }
 
+    if (!finalAddressId) {
+      toast.error('Please select or add a shipping address');
+      return;
+    }
+
+    const productsWithQuantity: Record<string, number> = {};
+    cartWithDetails.forEach((item: any) => {
+      productsWithQuantity[item.productId] = item.quantity;
+    });
+
     createOrder({
-      items: cartWithDetails.map(item => ({
-        productId: item.productId,
-        productName: item.product?.name,
-        imageUrl: item.product?.imageUrl,
-        price: item.product?.price || 0,
-        quantity: item.quantity
-      })),
-      totalAmount: total,
-      totalProductAmount: subtotal,
-      discountAmount: discount,
-      shippingFee,
-      shippingAddressSnapshot: finalAddress,
-      paymentMethodId: paymentMethodId
+      productsWithQuantity,
+      shippingAddressId: finalAddressId,
+      paymentMethodId: paymentMethodId,
+      voucherCode: voucherCode || undefined
     }, {
       onSuccess: (data: any) => {
-        clearCart(undefined, {
-          onSuccess: () => {
+        const handleSuccess = () => {
+          if (data.checkoutUrl) {
+            // Redirect to Payment Gateway
+            window.location.href = data.checkoutUrl;
+          } else {
+            // COD or no payment gateway
             toast.success('Order placed successfully!');
             navigate('/customer/order-success', { state: { orderId: data.id } });
           }
-        });
+        };
+
+        if (fromCart) {
+          clearCart(undefined, {
+            onSuccess: handleSuccess
+          });
+        } else {
+          handleSuccess();
+        }
       },
-      onError: () => toast.error('Failed to place order')
+      onError: (error: any) => {
+        console.error('Order creation error:', error);
+        toast.error(error.message || 'Failed to place order');
+      }
     });
   };
 
@@ -375,20 +429,25 @@ export function CheckoutPage() {
               </div>
             </CardHeader>
             <CardContent className="p-6">
-              <RadioGroup value={paymentMethodId} onValueChange={setPaymentMethodId} className="grid gap-4 md:grid-cols-3">
-                {availablePaymentMethods.map((method) => (
-                  <div key={method.id} className="h-full">
-                    <RadioGroupItem value={method.id} id={method.id} className="peer sr-only" />
-                    <Label
-                      htmlFor={method.id}
-                      className="flex flex-col items-center justify-between rounded-xl border-2 border-border/40 bg-background p-5 hover:bg-muted peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-muted transition-all cursor-pointer h-full"
-                    >
-                      <span className="font-bold text-xs text-center uppercase tracking-tight text-foreground">{method.name}</span>
-                      <p className="mt-1 text-[8px] text-muted-foreground text-center line-clamp-1 font-medium italic uppercase tracking-tight">{method.description}</p>
-                    </Label>
-                  </div>
-                ))}
-              </RadioGroup>
+              <Select value={paymentMethodId} onValueChange={setPaymentMethodId}>
+                <SelectTrigger className="w-full h-14 rounded-xl border-2 border-border/40 focus:border-primary focus:ring-0 transition-all bg-background">
+                  <SelectValue placeholder="Select Payment Method" />
+                </SelectTrigger>
+                <SelectContent className="rounded-xl border-border bg-card shadow-lg">
+                  {availablePaymentMethods.map((method) => (
+                    <SelectItem key={method.id} value={method.id} className="py-3 cursor-pointer rounded-lg hover:bg-muted/50 focus:bg-muted/50 transition-colors">
+                      <div className="flex flex-col items-start text-left">
+                        <span className="font-bold text-xs uppercase tracking-tight text-foreground">{method.name}</span>
+                        {method.description && (
+                          <span className="mt-1 text-[10px] text-muted-foreground font-medium italic uppercase tracking-tight line-clamp-1">
+                            {method.description}
+                          </span>
+                        )}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </CardContent>
           </Card>
         </div>
@@ -401,7 +460,7 @@ export function CheckoutPage() {
             </CardHeader>
             <CardContent className="p-6 space-y-6">
               <div className="space-y-4 max-h-[300px] overflow-auto pr-1 scrollbar-none">
-                {cartWithDetails.map((item) => (
+                {cartWithDetails.map((item : any) => (
                   <div key={item.productId} className="flex gap-4">
                     <div className="relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-xl bg-muted border border-border">
                       <img 

@@ -1,61 +1,78 @@
-import { mockCart, products } from '../data/mockData';
+import api from '../api/apiClient';
 import { CartItem } from '../models/ui_types/cart';
 
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+// ─── BE Response Types ──────────────────────────────────────
+interface CartProductDto {
+  id: string;
+  name: string;
+  brand: string;
+  price: number;
+  images: { id: string; imageUrl: string; isPrimary: boolean }[];
+}
 
-const joinProductDetails = (items: any[]): CartItem[] => {
-  return items.map(item => {
-    const product = products.find(p => p.id === item.productId);
-    return {
-      ...item,
-      productName: product?.name,
-      price: product?.price,
-      imageUrl: product?.imageUrl
-    };
-  });
+interface CartItemDto {
+  productId: string;
+  quantity: number;
+  createdAt: string;
+  updatedAt: string;
+  product: CartProductDto | null;
+}
+
+interface CartResponseDto {
+  userId: string;
+  items: CartItemDto[];
+  totalPrice: number;
+  totalItemsCount: number;
+}
+
+// ─── Mapping BE → FE ────────────────────────────────────────
+const mapCartItems = (dto: CartResponseDto): CartItem[] => {
+  return dto.items.map(item => ({
+    cartId: dto.userId,
+    productId: item.productId,
+    quantity: item.quantity,
+    createdAt: item.createdAt,
+    updatedAt: item.updatedAt,
+    productName: item.product?.name,
+    price: item.product?.price,
+    imageUrl: item.product?.images?.find(img => img.isPrimary)?.imageUrl
+      || item.product?.images?.[0]?.imageUrl,
+  }));
 };
 
 export const cartService = {
   getCart: async (): Promise<CartItem[]> => {
-    await delay(600);
-    return joinProductDetails([...mockCart]);
+    const cart = await api.get<CartResponseDto>('/cart');
+    return mapCartItems(cart);
   },
 
   addToCart: async (productId: string): Promise<CartItem[]> => {
-    await delay(800);
-    const existing = mockCart.find(item => item.productId === productId);
-    if (existing) {
-      existing.quantity += 1;
-    } else {
-      mockCart.push({ cartId: 'default', productId, quantity: 1 });
-    }
-    return joinProductDetails([...mockCart]);
+    await api.post('/cart/items', {
+      productId,
+      quantity: 1,
+    });
+    // Refetch cart to get updated state
+    return cartService.getCart();
   },
 
   updateQuantity: async (productId: string, quantity: number): Promise<CartItem[]> => {
-    await delay(500);
-    const index = mockCart.findIndex(item => item.productId === productId);
-    if (index !== -1) {
-      if (quantity < 1) {
-        mockCart.splice(index, 1);
-      } else {
-        mockCart[index].quantity = quantity;
-      }
+    if (quantity < 1) {
+      // Remove item if quantity drops below 1
+      return cartService.removeItem(productId);
     }
-    return joinProductDetails([...mockCart]);
+    await api.put(`/cart/items/${productId}`, { quantity });
+    return cartService.getCart();
   },
 
   removeItem: async (productId: string): Promise<CartItem[]> => {
-    await delay(500);
-    const index = mockCart.findIndex(item => item.productId === productId);
-    if (index !== -1) {
-      mockCart.splice(index, 1);
-    }
-    return joinProductDetails([...mockCart]);
+    await api.delete(`/cart/items/${productId}`);
+    return cartService.getCart();
   },
 
   clearCart: async (): Promise<void> => {
-    await delay(500);
-    mockCart.length = 0;
-  }
+    // BE doesn't have a clear cart endpoint
+    // Remove items one by one
+    const items = await cartService.getCart();
+    await Promise.all(items.map(item => api.delete(`/cart/items/${item.productId}`)));
+  },
 };

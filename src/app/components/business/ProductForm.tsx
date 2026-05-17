@@ -21,17 +21,19 @@ import {
 } from "../ui/select";
 import { Product, ProductStatus } from "../../../models/ui_types/product";
 import { Loader2 } from "lucide-react";
+import { useGetCategories } from "../../../dataHook/categoryDataHook";
 
 // Schema definition with clear numeric types and English messages
 const productSchema = z.object({
   name: z.string().min(2, "Product name must be at least 2 characters"),
   description: z.string().min(5, "Description must be at least 5 characters"),
   price: z.number().min(0, "Price must be greater than or equal to 0"),
-  stock: z.number().int().min(0, "Stock quantity cannot be negative"),
+  stock: z.number().int().min(0, "Stock quantity cannot be negative").optional(),
   status: z.nativeEnum(ProductStatus),
-  categoryName: z.string().min(1, "Category is required"),
+  categoryId: z.string().min(1, "Category is required"),
   brand: z.string().min(1, "Brand is required"),
   imageUrl: z.string().optional(),
+  imageFiles: z.any().optional(),
 });
 
 type ProductFormValues = z.infer<typeof productSchema>;
@@ -51,11 +53,14 @@ export function ProductForm({ initialData, onSubmit, isLoading }: ProductFormPro
       price: initialData?.price || 0,
       stock: initialData?.stock || 0,
       status: initialData?.status || ProductStatus.ACTIVE,
-      categoryName: initialData?.categoryName || "",
+      categoryId: initialData?.categoryId || "",
       brand: initialData?.brand || "",
       imageUrl: initialData?.imageUrl || "",
+      imageFiles: [],
     },
   });
+
+  const { data: categories = [], isLoading: catsLoading } = useGetCategories();
 
   return (
     <Form {...form}>
@@ -77,13 +82,24 @@ export function ProductForm({ initialData, onSubmit, isLoading }: ProductFormPro
         <div className="grid grid-cols-2 gap-4">
           <FormField
             control={form.control}
-            name="categoryName"
+            name="categoryId"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Category</FormLabel>
-                <FormControl>
-                  <Input placeholder="e.g., Electronics" {...field} />
-                </FormControl>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger disabled={catsLoading}>
+                      <SelectValue placeholder={catsLoading ? "Loading..." : "Select category"} />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {categories.map((category) => (
+                      <SelectItem key={category.id} value={category.id}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <FormMessage />
               </FormItem>
             )}
@@ -121,23 +137,25 @@ export function ProductForm({ initialData, onSubmit, isLoading }: ProductFormPro
               </FormItem>
             )}
           />
-          <FormField
-            control={form.control}
-            name="stock"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Stock Quantity</FormLabel>
-                <FormControl>
-                  <Input 
-                    type="number" 
-                    {...field} 
-                    onChange={(e) => field.onChange(Number(e.target.value))} 
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          {!initialData && (
+            <FormField
+              control={form.control}
+              name="stock"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Initial Stock</FormLabel>
+                  <FormControl>
+                    <Input 
+                      type="number" 
+                      {...field} 
+                      onChange={(e) => field.onChange(Number(e.target.value))} 
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
         </div>
 
         <FormField
@@ -180,19 +198,44 @@ export function ProductForm({ initialData, onSubmit, isLoading }: ProductFormPro
           )}
         />
 
-        <FormField
-          control={form.control}
-          name="imageUrl"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Image URL</FormLabel>
-              <FormControl>
-                <Input placeholder="https://example.com/image.jpg" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        {!initialData ? (
+          <FormField
+            control={form.control}
+            name="imageFiles"
+            render={({ field: { onChange, value, ...field } }) => (
+              <FormItem>
+                <FormLabel>Product Images (Upload multiple)</FormLabel>
+                <FormControl>
+                  <Input
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={(e) => {
+                      const files = e.target.files ? Array.from(e.target.files) : [];
+                      onChange(files);
+                    }}
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        ) : (
+          <FormField
+            control={form.control}
+            name="imageUrl"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Image URL</FormLabel>
+                <FormControl>
+                  <Input placeholder="https://example.com/image.jpg" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
 
         <div className="flex justify-end gap-2 pt-4">
           <Button type="submit" disabled={isLoading} className="min-w-[120px]">

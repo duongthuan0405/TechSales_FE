@@ -14,13 +14,8 @@ export const useLoginMutation = () => {
 };
 
 export const useRegisterMutation = () => {
-  const { setAuthUser } = useAuth();
-  
   return useMutation({
     mutationFn: (params: RegisterParams) => authService.register(params),
-    onSuccess: (user) => {
-      setAuthUser(user);
-    }
   });
 };
 
@@ -32,14 +27,14 @@ export const useResetPasswordMutation = () => {
 
 export const useConfirmResetMutation = () => {
   return useMutation({
-    mutationFn: ({ password, confirmPassword, token }: { password: string, confirmPassword: string, token: string }) => 
-      authService.confirmResetPassword(password, confirmPassword, token),
+    mutationFn: ({ password, confirmPassword, token, email }: { password: string, confirmPassword: string, token: string, email: string }) => 
+      authService.confirmResetPassword(password, confirmPassword, token, email),
   });
 };
 
 export const useVerifyEmailMutation = () => {
   return useMutation({
-    mutationFn: (token: string) => authService.verifyEmail(token),
+    mutationFn: ({ token, email }: { token: string, email: string }) => authService.verifyEmail(token, email),
   });
 };
 

@@ -12,7 +12,7 @@ import {
   Loader2,
   Star
 } from 'lucide-react';
-import { useGetOrder, useCancelOrder } from '../../../dataHook/orderDataHook';
+import { useGetOrder, useCancelOrder, useRepayOrder } from '../../../dataHook/orderDataHook';
 import { OrderStatus } from '../../../models/ui_types/order';
 import { toast } from 'sonner';
 import { useAuth } from '../../context/AuthContext';
@@ -28,8 +28,31 @@ export function OrderDetailPage() {
   const { user } = useAuth();
   const { data: order, isLoading } = useGetOrder(id || '');
   const { mutate: cancelOrder, isPending: isCancelling } = useCancelOrder();
+  const { mutate: repayOrder, isPending: isRepaying } = useRepayOrder();
   
   const [reviewItem, setReviewItem] = useState<{ id: string, name: string } | null>(null);
+
+  const getPaymentStatusInfo = (payments?: any[]) => {
+    if (!payments || payments.length === 0) {
+      return { label: 'PENDING', color: 'bg-amber-500/10 text-amber-500 hover:bg-amber-500/20' };
+    }
+    
+    const hasSuccess = payments.some(p => p.status === 'SUCCESS');
+    if (hasSuccess) {
+      return { label: 'PAID', color: 'bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20' };
+    }
+
+    const sorted = [...payments].sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+    const latest = sorted[0];
+
+    if (latest.status === 'FAILED') {
+      return { label: 'PAYMENT FAILED', color: 'bg-rose-500/10 text-rose-500 hover:bg-rose-500/20' };
+    }
+    if (latest.status === 'CANCELLED') {
+      return { label: 'CANCELLED', color: 'bg-neutral-500/10 text-neutral-500 hover:bg-neutral-500/20' };
+    }
+    return { label: 'PENDING', color: 'bg-amber-500/10 text-amber-500 hover:bg-amber-500/20' };
+  };
 
   const handleCancelOrder = () => {
     if (confirm('Are you sure you want to cancel this order?')) {
@@ -193,9 +216,58 @@ export function OrderDetailPage() {
                 <CreditCard className="h-4 w-4 text-muted-foreground" />
                 <CardTitle className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Payment Details</CardTitle>
               </CardHeader>
-              <CardContent className="p-6 pt-0 space-y-2">
-                <Badge className="bg-primary text-primary-foreground uppercase font-bold text-[8px] tracking-widest px-2 py-0.5 rounded-md">{order.status}</Badge>
-                <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest">Method: {order.paymentMethodName || order.paymentMethodId}</p>
+              <CardContent className="p-6 pt-0 space-y-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest">Order Status</span>
+                    <Badge className="bg-primary/10 text-primary uppercase font-bold text-[8px] tracking-widest px-2 py-0.5 rounded-md w-fit hover:bg-primary/20 transition-all">{order.status}</Badge>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest">Payment Status</span>
+                    <Badge className={`uppercase font-bold text-[8px] tracking-widest px-2 py-0.5 rounded-md w-fit transition-all ${getPaymentStatusInfo(order.payments).color}`}>
+                      {getPaymentStatusInfo(order.payments).label}
+                    </Badge>
+                  </div>
+                </div>
+                
+                <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest">Method: {order.paymentMethodName || 'Unknown'}</p>
+
+                {order.status === OrderStatus.PENDING && 
+                 order.paymentMethodName && 
+                 !['cod', 'cash', 'cash on delivery', 'tiền mặt', 'thanh toán khi nhận hàng'].includes(order.paymentMethodName.toLowerCase().trim()) && 
+                 !order.payments?.some(p => p.status === 'SUCCESS') && (
+                  <Button 
+                    onClick={() => {
+                      repayOrder({ id: order.id }, {
+                        onSuccess: (checkoutUrl) => {
+                          if (checkoutUrl) {
+                            toast.success('Redirecting to payment gateway...');
+                            window.location.href = checkoutUrl;
+                          } else {
+                            toast.error('Failed to get payment checkout URL');
+                          }
+                        },
+                        onError: (err: any) => {
+                          toast.error(err.message || 'Failed to initiate repayment');
+                        }
+                      });
+                    }}
+                    disabled={isRepaying}
+                    className="w-full mt-2 h-10 rounded-xl font-bold uppercase tracking-widest text-[9px] bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white shadow-md hover:shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                  >
+                    {isRepaying ? (
+                      <>
+                        <Loader2 className="h-3 w-3 animate-spin text-white" />
+                        Generating Link...
+                      </>
+                    ) : (
+                      <>
+                        <CreditCard className="h-3.5 w-3.5 text-white animate-pulse" />
+                        Pay Now (Thanh toán lại)
+                      </>
+                    )}
+                  </Button>
+                )}
               </CardContent>
             </Card>
           </div>

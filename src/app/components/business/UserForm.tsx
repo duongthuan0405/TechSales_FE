@@ -25,8 +25,9 @@ const userSchema = z.object({
   fullName: z.string().min(2, "Full name must be at least 2 characters"),
   email: z.string().email("Invalid email address"),
   phone: z.string().min(10, "Phone number must be at least 10 digits"),
-  role: z.enum(['Staff', 'Customer', 'BusinessAdmin', 'TechnicalAdmin']),
+  role: z.enum(['Staff', 'Customer', 'Business Admin', 'Technical Admin']),
   status: z.nativeEnum(UserStatus),
+  password: z.string().min(6, "Password must be at least 6 characters").optional(),
 });
 
 type UserFormValues = z.infer<typeof userSchema>;
@@ -36,9 +37,10 @@ interface UserFormProps {
   onSubmit: (data: UserFormValues) => void;
   isLoading?: boolean;
   forcedRole?: UserRole;
+  currentUserRole?: UserRole;
 }
 
-export function UserForm({ initialData, onSubmit, isLoading, forcedRole }: UserFormProps) {
+export function UserForm({ initialData, onSubmit, isLoading, forcedRole, currentUserRole }: UserFormProps) {
   const form = useForm<UserFormValues>({
     resolver: zodResolver(userSchema),
     defaultValues: {
@@ -47,6 +49,7 @@ export function UserForm({ initialData, onSubmit, isLoading, forcedRole }: UserF
       phone: initialData?.phone || "",
       role: forcedRole || initialData?.role || 'Staff',
       status: initialData?.status || UserStatus.ACTIVE,
+      password: "TemporaryPassword123!",
     },
   });
 
@@ -96,6 +99,25 @@ export function UserForm({ initialData, onSubmit, isLoading, forcedRole }: UserF
           />
         </div>
 
+        {!initialData && (
+          <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Temporary Password</FormLabel>
+                <FormControl>
+                  <Input type="text" placeholder="TemporaryPassword123!" {...field} />
+                </FormControl>
+                <p className="text-[10px] text-muted-foreground italic">
+                  Give this password to the new staff member so they can sign in.
+                </p>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
+
         <div className="grid grid-cols-2 gap-4">
           <FormField
             control={form.control}
@@ -114,10 +136,11 @@ export function UserForm({ initialData, onSubmit, isLoading, forcedRole }: UserF
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="Customer">Customer</SelectItem>
                     <SelectItem value="Staff">Sales Staff</SelectItem>
-                    <SelectItem value="BusinessAdmin">Business Admin</SelectItem>
-                    <SelectItem value="TechnicalAdmin">Technical Admin</SelectItem>
+                    <SelectItem value="Business Admin">Business Admin</SelectItem>
+                    {currentUserRole === 'Technical Admin' && (
+                      <SelectItem value="Technical Admin">Technical Admin</SelectItem>
+                    )}
                   </SelectContent>
                 </Select>
                 <FormMessage />

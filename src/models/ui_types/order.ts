@@ -31,4 +31,15 @@ export interface Order {
   customerName?: string; // UI convenience
   paymentMethodId?: string; // Relation in DB
   paymentMethodName?: string; // UI convenience
+  isPaymentFailed?: boolean | null; // UI convenience
+  checkoutUrl?: string; // Redirect link for online payment
+  payments?: PaymentInfo[];
+}
+
+export interface PaymentInfo {
+  id: string;
+  paymentMethodName: string;
+  status: 'PENDING' | 'SUCCESS' | 'FAILED' | 'CANCELLED';
+  amount: number;
+  transactionRef?: string;
 }

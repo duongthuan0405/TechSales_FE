@@ -85,7 +85,7 @@ export function HomePage() {
               <Card 
                 key={cat.id} 
                 className="group cursor-pointer border-none shadow-sm ring-1 ring-border bg-card transition-all hover:ring-black rounded-2xl overflow-hidden h-full" 
-                onClick={() => navigate(`/customer/products?category=${cat.name}`)}
+                onClick={() => navigate(`/customer/products?categoryIds=${cat.id}`)}
               >
                 <CardContent className="flex flex-col items-center justify-center p-8 h-full">
                   <span className="font-bold text-sm uppercase tracking-tight text-center text-foreground">{cat.name}</span>
@@ -184,7 +184,7 @@ export function HomePage() {
                   <img src={product.imageUrl || ''} alt={product.name} className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
                   <div className="absolute right-3 top-3">
                     <Badge className="bg-black text-white border-none font-bold text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-md">
-                      {product.categoryName}
+                      {categories.find(c => c.id === product.categoryId)?.name || 'Hardware'}
                     </Badge>
                   </div>
                 </div>

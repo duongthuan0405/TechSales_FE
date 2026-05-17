@@ -20,23 +20,29 @@ import {
 } from "../../components/ui/select";
 import { Search, Edit, Trash2, Plus, Loader2 } from "lucide-react";
 import { useGetProducts } from "../../dataHook/productDataHook";
+import { useGetCategories } from "../../dataHook/categoryDataHook";
 
 export function ProductManagementPage() {
   const { data: products = [], isLoading } = useGetProducts();
+  const { data: categoriesData = [] } = useGetCategories();
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
 
   const categories = [
     "all",
-    ...Array.from(new Set(products.map((p) => p.categoryName || "Uncategorized"))),
+    ...categoriesData.map(c => c.id)
   ];
+
+  const getCategoryName = (categoryId?: string) => {
+    return categoriesData.find(c => c.id === categoryId)?.name || "Uncategorized";
+  };
 
   const filteredProducts = products.filter((product) => {
     const matchesSearch =
       product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (product.brand || "").toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory =
-      categoryFilter === "all" || product.categoryName === categoryFilter;
+      categoryFilter === "all" || product.categoryId === categoryFilter;
     return matchesSearch && matchesCategory;
   });
 
@@ -77,9 +83,9 @@ export function ProductManagementPage() {
             <SelectValue placeholder="All Categories" />
           </SelectTrigger>
           <SelectContent>
-            {categories.map((cat) => (
-              <SelectItem key={cat} value={cat}>
-                {cat === "all" ? "All Categories" : cat}
+            {categories.map((catId) => (
+              <SelectItem key={catId} value={catId}>
+                {catId === "all" ? "All Categories" : getCategoryName(catId)}
               </SelectItem>
             ))}
           </SelectContent>
@@ -131,7 +137,7 @@ export function ProductManagementPage() {
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell>{product.categoryName}</TableCell>
+                      <TableCell>{getCategoryName(product.categoryId)}</TableCell>
                       <TableCell>{product.brand || 'N/A'}</TableCell>
                       <TableCell className="font-semibold">
                         ${product.price.toLocaleString()}

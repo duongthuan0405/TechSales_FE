@@ -41,7 +41,6 @@ import {
   UserPlus, 
   Mail, 
   UserCog, 
-  Trash2, 
   Edit, 
   Loader2,
   UserCheck,
@@ -55,7 +54,6 @@ import {
 import { 
   useGetStaff, 
   useUpdateUser, 
-  useDeleteUser,
   useCreateUser,
   useToggleUserStatus
 } from "../../../dataHook/userDataHook";
@@ -63,11 +61,12 @@ import { User, UserRole, UserStatus } from "../../../models/ui_types/user";
 import { toast } from "sonner";
 import { UserForm } from "../../components/business/UserForm";
 import { Separator } from "../../components/ui/separator";
+import { useAuth } from "../../context/AuthContext";
 
 export function StaffManagementPage() {
+  const { user: currentUser } = useAuth();
   const { data: staffMembers = [], isLoading } = useGetStaff();
   const updateMutation = useUpdateUser();
-  const deleteMutation = useDeleteUser();
   const createMutation = useCreateUser();
   const toggleStatusMutation = useToggleUserStatus();
 
@@ -79,7 +78,6 @@ export function StaffManagementPage() {
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | undefined>(undefined);
   const [editingUser, setEditingUser] = useState<User | undefined>(undefined);
-  const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
 
   const filteredStaff = staffMembers.filter((u) => {
     const matchesSearch = 
@@ -133,12 +131,12 @@ export function StaffManagementPage() {
 
   const handleToggleStatus = (user: User, e?: React.MouseEvent) => {
     e?.stopPropagation();
-    if (user.role === 'TechnicalAdmin') {
+    if (user.role === 'Technical Admin') {
       toast.error("Cannot block a Technical Admin");
       return;
     }
 
-    toggleStatusMutation.mutate(user.id, {
+    toggleStatusMutation.mutate({ id: user.id, status: user.status }, {
       onSuccess: (updated) => {
         const isBlocked = updated.status === UserStatus.BLOCKED;
         toast.success(`Staff account ${isBlocked ? 'blocked' : 'activated'}`);
@@ -148,28 +146,12 @@ export function StaffManagementPage() {
     });
   };
 
-  const confirmDelete = () => {
-    if (deletingUserId) {
-      deleteMutation.mutate(deletingUserId, {
-        onSuccess: () => {
-          toast.success("Staff account removed");
-          setDeletingUserId(null);
-          setIsDetailOpen(false);
-        },
-        onError: () => toast.error("Failed to remove staff account"),
-      });
-    }
-  };
 
-  const handleDeleteClick = (id: string, e?: React.MouseEvent) => {
-    e?.stopPropagation();
-    setDeletingUserId(id);
-  };
 
   const getRoleBadge = (role: UserRole) => {
     switch (role) {
-      case 'TechnicalAdmin': return <Badge className="bg-red-500/10 text-red-500 border-red-500/20">Tech Admin</Badge>;
-      case 'BusinessAdmin': return <Badge className="bg-blue-500/10 text-blue-500 border-blue-500/20">Bus Admin</Badge>;
+      case 'Technical Admin': return <Badge className="bg-red-500/10 text-red-500 border-red-500/20">Tech Admin</Badge>;
+      case 'Business Admin': return <Badge className="bg-blue-500/10 text-blue-500 border-blue-500/20">Bus Admin</Badge>;
       case 'Staff': return <Badge className="bg-green-500/10 text-green-500 border-green-500/20">Sales Staff</Badge>;
       default: return <Badge variant="outline">{role}</Badge>;
     }
@@ -213,8 +195,8 @@ export function StaffManagementPage() {
           <SelectContent>
             <SelectItem value="all">All Roles</SelectItem>
             <SelectItem value="Staff">Sales Staff</SelectItem>
-            <SelectItem value="BusinessAdmin">Business Admin</SelectItem>
-            <SelectItem value="TechnicalAdmin">Technical Admin</SelectItem>
+            <SelectItem value="Business Admin">Business Admin</SelectItem>
+            <SelectItem value="Technical Admin">Technical Admin</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -284,9 +266,9 @@ export function StaffManagementPage() {
                           variant="ghost" 
                           size="icon" 
                           onClick={(e) => handleToggleStatus(user, e)}
-                          disabled={user.role === 'TechnicalAdmin' || toggleStatusMutation.isPending}
+                          disabled={user.role === 'Technical Admin' || toggleStatusMutation.isPending || user.id === currentUser?.id}
                         >
-                          {toggleStatusMutation.isPending && toggleStatusMutation.variables === user.id ? (
+                          {toggleStatusMutation.isPending && (toggleStatusMutation.variables as any)?.id === user.id ? (
                             <Loader2 className="h-4 w-4 animate-spin" />
                           ) : user.status === UserStatus.BLOCKED ? (
                             <UserCheck className="h-4 w-4 text-success" />
@@ -344,7 +326,7 @@ export function StaffManagementPage() {
                     variant={selectedUser.status === UserStatus.BLOCKED ? "success" : "destructive"} 
                     size="sm"
                     onClick={() => handleToggleStatus(selectedUser)}
-                    disabled={toggleStatusMutation.isPending || selectedUser.role === 'TechnicalAdmin'}
+                    disabled={toggleStatusMutation.isPending || selectedUser.role === 'Technical Admin'}
                   >
                     {toggleStatusMutation.isPending ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -411,15 +393,7 @@ export function StaffManagementPage() {
               </div>
             </div>
           )}
-          <DialogFooter className="sticky bottom-0 bg-background pt-2 border-t mt-4 flex flex-col sm:flex-row gap-4 justify-between sm:justify-between items-center">
-            <Button 
-              variant="link" 
-              className="text-destructive p-0 h-auto text-xs"
-              onClick={() => handleDeleteClick(selectedUser!.id)}
-              disabled={selectedUser?.role === 'TechnicalAdmin'}
-            >
-              Permanently delete this account
-            </Button>
+          <DialogFooter className="sticky bottom-0 bg-background pt-2 border-t mt-4 flex flex-col sm:flex-row gap-4 justify-end items-center">
             <Button variant="ghost" onClick={() => setIsDetailOpen(false)}>Close</Button>
           </DialogFooter>
         </DialogContent>
@@ -438,33 +412,12 @@ export function StaffManagementPage() {
             initialData={editingUser} 
             onSubmit={onFormSubmit}
             isLoading={updateMutation.isPending || createMutation.isPending}
+            currentUserRole={currentUser?.role}
           />
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation */}
-      <AlertDialog 
-        open={!!deletingUserId} 
-        onOpenChange={(open) => !open && setDeletingUserId(null)}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Remove Access?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will immediately revoke all management permissions. This action is separate from blocking.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={confirmDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {deleteMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Remove Access"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+
     </div>
   );
 }

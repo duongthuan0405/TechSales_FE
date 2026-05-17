@@ -15,7 +15,8 @@ import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
 import { Card, CardContent } from '../../components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
-import { useGetProduct } from '../../dataHook/productDataHook';
+import { useGetProduct, useGetProducts } from '../../dataHook/productDataHook';
+import { useGetCategories } from '../../dataHook/categoryDataHook';
 import { useGetProductReviews } from '../../dataHook/reviewDataHook';
 import { useAddToCart } from '../../dataHook/cartDataHook';
 import { toast } from 'sonner';
@@ -31,6 +32,7 @@ export function ProductDetailPage() {
   const isCustomer = user?.role === 'Customer';
 
   const { data: product, isLoading: isProductLoading, isError } = useGetProduct(id || '');
+  const { data: categoriesData = [] } = useGetCategories();
   const { data: reviews = [], isLoading: isReviewsLoading } = useGetProductReviews(id || '');
   const { mutate: addToCart, isPending: isAdding } = useAddToCart();
 
@@ -84,7 +86,9 @@ export function ProductDetailPage() {
         {/* Product Info */}
         <div className="space-y-6">
           <div className="space-y-2">
-            <Badge className="bg-primary text-primary-foreground px-2.5 py-0.5 rounded-md font-bold text-[8px] uppercase tracking-wider border-none">{product.categoryName || 'General'}</Badge>
+            <Badge className="bg-primary text-primary-foreground px-2.5 py-0.5 rounded-md font-bold text-[8px] uppercase tracking-wider border-none">
+              {categoriesData.find(c => c.id === product.categoryId)?.name || 'Hardware'}
+            </Badge>
             <h1 className="text-3xl font-bold tracking-tight text-foreground uppercase">{product.name}</h1>
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-1">

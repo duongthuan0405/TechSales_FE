@@ -19,6 +19,7 @@ export function SignUpPage() {
     password: '',
     confirmPassword: ''
   });
+  const [isSuccess, setIsSuccess] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({ ...prev, [e.target.id]: e.target.value }));
@@ -38,14 +39,36 @@ export function SignUpPage() {
       password: formData.password
     }, {
       onSuccess: () => {
+        setIsSuccess(true);
         toast.success('Account created successfully!');
-        navigate('/customer');
       },
       onError: (err: any) => {
         toast.error(err.message || 'Failed to create account');
       }
     });
   };
+
+  if (isSuccess) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4 dark:from-slate-950 dark:to-slate-900">
+        <div className="w-full max-w-md">
+          <Card className="border-none shadow-2xl text-center p-8">
+            <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30">
+              <CheckCircle2 className="h-10 w-10" />
+            </div>
+            <CardTitle className="text-2xl mb-2">Registration Successful!</CardTitle>
+            <CardDescription className="text-base mb-8">
+              We have sent a verification link to <span className="font-bold text-slate-900 dark:text-white">{formData.email}</span>.
+              Please check your email (including your **Spam** folder) to verify and activate your account before logging in.
+            </CardDescription>
+            <Button className="w-full h-12 text-lg font-bold" onClick={() => navigate('/auth/login')}>
+              Go to Sign In
+            </Button>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4 dark:from-slate-950 dark:to-slate-900">

@@ -1,57 +1,60 @@
-import { mockReviews } from '../data/mockData';
+import api, { PagedResponse } from '../api/apiClient';
 import { Review, ReviewStatus } from '../models/ui_types/review';
-import { delay } from '../utils/delay';
+
+// ─── BE Response Types ──────────────────────────────────────
+interface ReviewStaffDto {
+  id: string;
+  rating: number;
+  comment: string;
+  productName?: string;
+  status: string;
+  violationReason?: string;
+  createdAt: string;
+  profile: {
+    fullName: string;
+    avatarUrl?: string;
+  };
+}
+
+// ─── Mapping ────────────────────────────────────────────────
+const mapStaffReview = (dto: ReviewStaffDto): Review => ({
+  id: dto.id,
+  userId: '',
+  userName: dto.profile?.fullName || 'Anonymous',
+  userAvatar: dto.profile?.avatarUrl,
+  productId: '',
+  rating: dto.rating,
+  comment: dto.comment || '',
+  status: (dto.status as ReviewStatus) || ReviewStatus.VISIBLE,
+  createdAt: dto.createdAt,
+  productName: dto.productName,
+});
 
 export const reviewService = {
-  getReviewsByProductId: async (productId: string): Promise<Review[]> => {
-    await delay(600);
-    return mockReviews.filter(r => r.productId === productId && r.status === ReviewStatus.VISIBLE);
+  getReviewsByProductId: async (_productId: string): Promise<Review[]> => {
+    // BE doesn't have a customer-facing product reviews endpoint
+    return [];
   },
 
-  getAllReviews: async (): Promise<Review[]> => {
-    await delay(800);
-    return [...mockReviews].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  getAllReviews: async (pageNumber = 1, pageSize = 20): Promise<Review[]> => {
+    const paged = await api.get<PagedResponse<ReviewStaffDto>>(
+      `/Review/latest?pageNumber=${pageNumber}&pageSize=${pageSize}`,
+    );
+    return paged.items.map(mapStaffReview);
   },
 
-  submitReview: async (reviewData: Omit<Review, 'id' | 'createdAt' | 'status'>): Promise<Review> => {
-    await delay(1000);
-    const newReview: Review = {
-      ...reviewData,
-      id: `rev-${Math.random().toString(36).substr(2, 9)}`,
-      status: ReviewStatus.VISIBLE,
-      createdAt: new Date().toISOString()
-    };
-    mockReviews.unshift(newReview);
-    return newReview;
+  submitReview: async (_reviewData: Omit<Review, 'id' | 'createdAt' | 'status'>): Promise<Review> => {
+    // BE doesn't have a customer submit review endpoint
+    throw new Error('Submit review is not supported by the server.');
   },
 
   moderateReview: async (id: string, status: ReviewStatus): Promise<void> => {
-    await delay(800);
-    const index = mockReviews.findIndex(r => r.id === id);
-    if (index !== -1) {
-      mockReviews[index] = { ...mockReviews[index], status };
+    if (status === ReviewStatus.HIDDEN) {
+      await api.put(`/Review/${id}/hide`, { reason: 'Hidden by staff' });
     }
   },
 
   replyToReview: async (id: string, reply: string): Promise<void> => {
-    await delay(800);
-    const index = mockReviews.findIndex(r => r.id === id);
-    if (index !== -1) {
-      const review = mockReviews[index];
-      const newResponse = {
-        id: `resp-${Math.random().toString(36).substr(2, 9)}`,
-        reviewId: id,
-        userId: 'u3', // Mocking current staff user ID
-        userName: 'Staff',
-        content: reply,
-        createdAt: new Date().toISOString()
-      };
-      
-      mockReviews[index] = { 
-        ...review, 
-        responses: [...(review.responses || []), newResponse],
-        reply: reply // Keep for backward compatibility
-      };
-    }
-  }
+    await api.post(`/Review/${id}/reply`, { content: reply });
+  },
 };

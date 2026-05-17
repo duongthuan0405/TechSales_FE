@@ -1,51 +1,32 @@
-import { delay } from '../app/utils/delay';
+import api from '../api/apiClient';
 import { Address } from '../models/ui_types/address';
-import { mockAddresses } from '../data/mockData';
 
 export const addressService = {
   getAddresses: async (): Promise<Address[]> => {
-    await delay(800);
-    return [...mockAddresses];
+    return await api.get<Address[]>('/shipping-address');
   },
 
-  createAddress: async (address: Omit<Address, 'id'>): Promise<Address> => {
-    await delay(1000);
-    const newAddress = { ...address, id: Math.random().toString(36).substr(2, 9) };
-    
-    if (newAddress.isDefault) {
-      // Logic to reset other defaults
-      mockAddresses.forEach(a => a.isDefault = false);
-    }
-    
-    mockAddresses.push(newAddress);
-    return newAddress;
+  createAddress: async (address: Omit<Address, 'id'>): Promise<void> => {
+    await api.post('/shipping-address', {
+      province: address.province,
+      ward: address.ward,
+      detail: address.detail,
+    });
   },
 
-  updateAddress: async (id: string, updates: Partial<Address>): Promise<Address> => {
-    await delay(1000);
-    const index = mockAddresses.findIndex(a => a.id === id);
-    if (index === -1) throw new Error('Address not found');
-
-    if (updates.isDefault) {
-      mockAddresses.forEach(a => a.isDefault = false);
-    }
-
-    mockAddresses[index] = { ...mockAddresses[index], ...updates };
-    return mockAddresses[index];
+  updateAddress: async (id: string, updates: Partial<Address>): Promise<void> => {
+    await api.put(`/shipping-address/${id}`, {
+      province: updates.province,
+      ward: updates.ward,
+      detail: updates.detail,
+    });
   },
 
   deleteAddress: async (id: string): Promise<void> => {
-    await delay(800);
-    const index = mockAddresses.findIndex(a => a.id === id);
-    if (index !== -1) {
-      mockAddresses.splice(index, 1);
-    }
+    await api.delete(`/shipping-address/${id}`);
   },
 
   setDefaultAddress: async (id: string): Promise<void> => {
-    await delay(500);
-    mockAddresses.forEach(a => {
-      a.isDefault = a.id === id;
-    });
-  }
+    await api.patch(`/shipping-address/${id}/default`);
+  },
 };

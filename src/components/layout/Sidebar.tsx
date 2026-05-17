@@ -12,12 +12,13 @@ import {
   Database,
   Shield,
   MapPin,
-  Star
+  Star,
+  Ticket
 } from 'lucide-react';
 import { cn } from '../../utils/cn';
 
 interface SidebarProps {
-  role: 'Customer' | 'Staff' | 'BusinessAdmin' | 'TechnicalAdmin';
+  role: 'Customer' | 'Staff' | 'Business Admin' | 'Technical Admin';
 }
 
 interface NavItem {
@@ -41,16 +42,17 @@ const roleNavItems: Record<string, NavItem[]> = {
     { icon: <ShoppingCart className="h-5 w-5" />, label: 'Orders', path: '/sales/orders' },
     { icon: <Star className="h-5 w-5" />, label: 'Reviews', path: '/sales/reviews' },
   ],
-  BusinessAdmin: [
+  'Business Admin': [
     { icon: <LayoutDashboard className="h-5 w-5" />, label: 'Dashboard', path: '/business' },
     { icon: <BarChart3 className="h-5 w-5" />, label: 'Analytics', path: '/business/analytics' },
     { icon: <Package className="h-5 w-5" />, label: 'Products', path: '/business/products' },
     { icon: <ShoppingCart className="h-5 w-5" />, label: 'Orders', path: '/business/orders' },
     { icon: <Users className="h-5 w-5" />, label: 'Customers', path: '/business/customers' },
     { icon: <FileText className="h-5 w-5" />, label: 'Reports', path: '/business/reports' },
+    { icon: <Ticket className="h-5 w-5" />, label: 'Vouchers', path: '/business/vouchers' },
     { icon: <Settings className="h-5 w-5" />, label: 'Settings', path: '/business/settings' },
   ],
-  TechnicalAdmin: [
+  'Technical Admin': [
     { icon: <LayoutDashboard className="h-5 w-5" />, label: 'Dashboard', path: '/technical' },
     { icon: <Users className="h-5 w-5" />, label: 'User Management', path: '/technical/users' },
     { icon: <Shield className="h-5 w-5" />, label: 'Roles & Permissions', path: '/technical/roles' },

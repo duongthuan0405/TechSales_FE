@@ -11,13 +11,15 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "../../components/ui/select";
-import { Search, Edit, Trash2, UserPlus, Loader2 } from 'lucide-react';
-import { useGetUsers, useDeleteUser } from '../../dataHook/userDataHook';
+import { Search, Edit, Trash2, UserPlus, Loader2, Lock, Unlock } from 'lucide-react';
+import { useGetUsers, useToggleUserStatus } from '../../dataHook/userDataHook';
 import { toast } from 'sonner';
+import { useAuth } from '../../app/context/AuthContext';
 
 export function UserManagementPage() {
+  const { user: currentUser } = useAuth();
   const { data: users = [], isLoading, isError } = useGetUsers();
-  const { mutate: deleteUser, isPending: isDeleting } = useDeleteUser();
+  const { mutate: toggleStatus, isPending: isToggling } = useToggleUserStatus();
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
 
@@ -27,11 +29,12 @@ export function UserManagementPage() {
     }
   }, [isError]);
 
-  const handleDeleteUser = (id: string) => {
-    if (window.confirm('Are you sure you want to delete this user?')) {
-      deleteUser(id, {
-        onSuccess: () => toast.success('User deleted successfully'),
-        onError: () => toast.error('Failed to delete user')
+  const handleToggleStatus = (id: string, currentStatus: any) => {
+    const action = currentStatus === 'ACTIVE' ? 'block' : 'unblock';
+    if (window.confirm(`Are you sure you want to ${action} this user?`)) {
+      toggleStatus({ id, status: currentStatus }, {
+        onSuccess: () => toast.success(`User ${action}ed successfully`),
+        onError: () => toast.error(`Failed to ${action} user`)
       });
     }
   };
@@ -75,10 +78,10 @@ export function UserManagementPage() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Roles</SelectItem>
-            <SelectItem value="customer">Customer</SelectItem>
-            <SelectItem value="sales">Sales Staff</SelectItem>
-            <SelectItem value="business">Business Admin</SelectItem>
-            <SelectItem value="technical">Technical Admin</SelectItem>
+            <SelectItem value="Customer">Customer</SelectItem>
+            <SelectItem value="Staff">Sales Staff</SelectItem>
+            <SelectItem value="Business Admin">Business Admin</SelectItem>
+            <SelectItem value="Technical Admin">Technical Admin</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -121,7 +124,7 @@ export function UserManagementPage() {
                     <TableCell>{user.email}</TableCell>
                     <TableCell>
                       <Badge variant="secondary">
-                        {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+                        {user.role}
                       </Badge>
                     </TableCell>
                     <TableCell>
@@ -129,20 +132,25 @@ export function UserManagementPage() {
                         {user.status}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{user.createdAt}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{new Date(user.createdAt).toLocaleDateString()}</TableCell>
                     <TableCell>
                       <div className="flex gap-2">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleToggleStatus(user.id, user.status)}
+                          disabled={isToggling || user.id === currentUser?.id}
+                        >
+                          {user.status === 'ACTIVE' ? (
+                            <Lock className="h-4 w-4 text-orange-500" />
+                          ) : (
+                            <Unlock className="h-4 w-4 text-green-500" />
+                          )}
+                        </Button>
                         <Button variant="ghost" size="sm">
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          onClick={() => handleDeleteUser(user.id)}
-                          disabled={isDeleting}
-                        >
-                          {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4 text-destructive" />}
-                        </Button>
+                        
                       </div>
                     </TableCell>
                   </TableRow>
