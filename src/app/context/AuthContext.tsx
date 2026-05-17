@@ -43,10 +43,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
     setUser(null);
-    localStorage.removeItem('token');
-    localStorage.removeItem('tech_sales_user');
+    await authService.logout();
   };
 
   const switchRole = (role: UserRole) => {

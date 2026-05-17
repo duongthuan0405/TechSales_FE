@@ -143,4 +143,15 @@ export const authService = {
       return null;
     }
   },
+
+  logout: async (): Promise<void> => {
+    try {
+      await api.post('/auth/logout');
+    } catch (error) {
+      console.error('Logout error on server:', error);
+    } finally {
+      localStorage.removeItem('token');
+      localStorage.removeItem('tech_sales_user');
+    }
+  },
 };
