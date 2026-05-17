@@ -63,6 +63,8 @@ export const authService = {
       name: userMe.profile?.fullName || userMe.email,
       email: userMe.email,
       role: mapRole(userMe.roles),
+      phone: userMe.profile?.phone,
+      avatarUrl: userMe.profile?.avatarUrl,
     };
   },
 
@@ -132,6 +134,8 @@ export const authService = {
         name: userMe.profile?.fullName || userMe.email,
         email: userMe.email,
         role: mapRole(userMe.roles),
+        phone: userMe.profile?.phone,
+        avatarUrl: userMe.profile?.avatarUrl,
       };
     } catch {
       // Token expired or invalid — clean up

@@ -35,6 +35,13 @@ interface OrderDetailDto {
   paymentMethodName?: string;
   isPaymentFailed?: boolean | null;
   items: OrderItemDto[];
+  payments?: {
+    id: string;
+    paymentMethodName: string;
+    status: string;
+    amount: number;
+    transactionRef?: string;
+  }[];
 }
 
 interface OrderStaffDto extends OrderResponseDto {
@@ -102,6 +109,13 @@ const mapOrderDetail = (dto: OrderDetailDto): Order => ({
     price: i.price,
     quantity: i.quantity,
   })),
+  payments: dto.payments?.map(p => ({
+    id: p.id,
+    paymentMethodName: p.paymentMethodName,
+    status: p.status as any,
+    amount: p.amount,
+    transactionRef: p.transactionRef,
+  })) || [],
 });
 
 const mapStaffOrder = (dto: OrderStaffDto): Order => ({
@@ -270,5 +284,12 @@ export const orderService = {
       `/admin/orders?pageNumber=${pageNumber}&pageSize=${pageSize}`,
     );
     return paged.items.map(mapAdminOrder);
+  },
+
+  repay: async (id: string, paymentMethodId?: string): Promise<string | null> => {
+    const res = await api.post<{ checkoutUrl: string | null }>(`/order/${id}/repay`, {
+      paymentMethodId,
+    });
+    return res.checkoutUrl;
   },
 };

@@ -88,6 +88,7 @@ function AppContent() {
       role={user.role}
       userName={user.name}
       userRole={getRoleDisplayName(user.role)}
+      userAvatar={user.avatarUrl}
       onLogout={logout}
     >
       <Routes>

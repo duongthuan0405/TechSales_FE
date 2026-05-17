@@ -73,3 +73,15 @@ export const useUpdateOrderStatus = () => {
     },
   });
 };
+
+export const useRepayOrder = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, paymentMethodId }: { id: string; paymentMethodId?: string }) =>
+      orderService.repay(id, paymentMethodId),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['orders', variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+    },
+  });
+};

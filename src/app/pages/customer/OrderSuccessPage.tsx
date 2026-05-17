@@ -9,7 +9,10 @@ export function OrderSuccessPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
-  const orderId = location.state?.orderId || searchParams.get('orderId') || 'ORD-UNKNOWN';
+  let orderId = location.state?.orderId || searchParams.get('orderId') || 'ORD-UNKNOWN';
+  if (orderId && orderId.includes('_')) {
+    orderId = orderId.split('_')[0];
+  }
 
   useEffect(() => {
     // Launch confetti!
